@@ -23,5 +23,14 @@ tools3dct setup.py installs pyqt5 and pyqt5-qt5
 imageio 2.9, even though it is already installed in conda environment.
 
 Moved tools3dct to this project
-(please not that there is other stuff in the tools3dct that may be useful, such as the analysis routines)
+(please note that there is other stuff in the tools3dct that may be useful, such as the analysis routines)
 
+
+Creation of the executable file is working, file runs but nothing happens. Can't debug.
+Try changing all packages to conda-forge
+ 
+To debug, create installer without --windowed flag
+pyinstaller TDCT_main.py --name "3DCorrelationToolbox-RFI" -i "icons\3DCT_icon.ico" --hidden-import="skimage.filters.rank.core_cy_3d" --add-data "TDCT_correlation.ui;." --add-data "TDCT_main.ui;." --add-data "icons_rc.py;."
+
+Getting pyinstaller errors when trying to execute the file
+IMPORTANT - Install pyinstaller using pip instead of conda

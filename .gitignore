@@ -249,3 +249,7 @@ spec/
 __init__.py
 # test/
 .cache/
+3DCorrelationToolbox-RFI.spec
+3DCorrelationToolboxHKHF-RFI-single.spec
+.gitignore
+.gitignore

@@ -245,6 +245,102 @@
      </widget>
     </item>
     <item>
+     <widget class="QGroupBox" name="Filebrowser">
+      <property name="title">
+       <string>Files in working directory</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>10</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>10</number>
+       </property>
+       <property name="bottomMargin">
+        <number>5</number>
+       </property>
+       <item>
+        <widget class="QListWidget" name="listWidget_WorkingDir"/>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QToolButton" name="toolButton_selectAsImage1">
+           <property name="text">
+            <string>select for correlation -&gt; Image file 1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="toolButton_selectAsImage2">
+           <property name="text">
+            <string>select for correlation -&gt; Image file 2</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QToolButton" name="toolButton_FileListReload">
+           <property name="maximumSize">
+            <size>
+             <width>23</width>
+             <height>21</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>Reload</string>
+           </property>
+           <property name="statusTip">
+            <string>Reload</string>
+           </property>
+           <property name="whatsThis">
+            <string/>
+           </property>
+           <property name="accessibleName">
+            <string/>
+           </property>
+           <property name="accessibleDescription">
+            <string/>
+           </property>
+           <property name="text">
+            <string>↻</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="toolButton_FileListHelp">
+           <property name="text">
+            <string>?</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <widget class="QGroupBox" name="dataProcessing">
       <property name="minimumSize">
        <size>
@@ -259,7 +355,7 @@
        </size>
       </property>
       <property name="title">
-       <string>Data Processing</string>
+       <string>Data Processing Tools</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="spacing">
@@ -280,7 +376,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>3</number>
+          <number>5</number>
          </property>
          <widget class="QWidget" name="ImageStack">
           <attribute name="title">
@@ -1613,103 +1709,129 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="DeconvRL_tab">
+          <attribute name="title">
+           <string>Deconvolution</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="leftMargin">
+            <number>5</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>5</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>Deconvolution using PyCudaDecon package, Richardson-Lucy algorithm</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_26">
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Data image/volume:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="toolButton_DeconvRLDataSelect">
+               <property name="text">
+                <string>Select...</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEditFilePath" name="lineEdit_NormalizePath"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_27">
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>PSF image/volume</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="toolButton_DeconvRLPSFDataSelect">
+               <property name="text">
+                <string>Select...</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEditFilePath" name="lineEdit_NormalizePath"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_28">
+             <item>
+              <widget class="QLabel" name="label_17">
+               <property name="text">
+                <string>Iterations</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spinBox">
+               <property name="minimum">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <number>200</number>
+               </property>
+               <property name="value">
+                <number>10</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_26">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QCommandLinkButton" name="commandLinkButton_Deconvolve">
+               <property name="text">
+                <string>Deconvolve</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QProgressBar" name="progressBar">
+               <property name="value">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
         </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="Filebrowser">
-      <property name="title">
-       <string>Files in working directory</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="spacing">
-        <number>5</number>
-       </property>
-       <property name="leftMargin">
-        <number>10</number>
-       </property>
-       <property name="topMargin">
-        <number>5</number>
-       </property>
-       <property name="rightMargin">
-        <number>10</number>
-       </property>
-       <property name="bottomMargin">
-        <number>5</number>
-       </property>
-       <item>
-        <widget class="QListWidget" name="listWidget_WorkingDir"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <property name="spacing">
-          <number>6</number>
-         </property>
-         <item>
-          <widget class="QToolButton" name="toolButton_selectAsImage1">
-           <property name="text">
-            <string>select for correlation -&gt; Image file 1</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="toolButton_selectAsImage2">
-           <property name="text">
-            <string>select for correlation -&gt; Image file 2</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QToolButton" name="toolButton_FileListReload">
-           <property name="maximumSize">
-            <size>
-             <width>23</width>
-             <height>21</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>Reload</string>
-           </property>
-           <property name="statusTip">
-            <string>Reload</string>
-           </property>
-           <property name="whatsThis">
-            <string/>
-           </property>
-           <property name="accessibleName">
-            <string/>
-           </property>
-           <property name="accessibleDescription">
-            <string/>
-           </property>
-           <property name="text">
-            <string>↻</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="toolButton_FileListHelp">
-           <property name="text">
-            <string>?</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </item>
       </layout>
      </widget>
@@ -1727,6 +1849,9 @@
         <width>16777215</width>
         <height>140</height>
        </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
       </property>
       <property name="title">
        <string>Correlation</string>
@@ -1962,7 +2087,7 @@
             <bool>true</bool>
            </property>
            <property name="text">
-            <string>Open Correlation Tool</string>
+            <string>Launch Correlation Toolbox</string>
            </property>
           </widget>
          </item>
@@ -1992,7 +2117,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTest">
@@ -2069,22 +2194,6 @@
   <connection>
    <sender>checkBox_ImageSequenceCube</sender>
    <signal>toggled(bool)</signal>
-   <receiver>doubleSpinBox_ImageSequenceFocusStepSizeOrig</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>76</x>
-     <y>199</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>222</x>
-     <y>228</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox_ImageSequenceCube</sender>
-   <signal>toggled(bool)</signal>
    <receiver>doubleSpinBox_ImageSequenceFocusStepSizeReslized</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
@@ -2111,6 +2220,22 @@
     <hint type="destinationlabel">
      <x>697</x>
      <y>230</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_ImageSequenceCube</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_ImageSequenceFocusStepSizeOrig</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>76</x>
+     <y>199</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>222</x>
+     <y>228</y>
     </hint>
    </hints>
   </connection>

@@ -1732,7 +1732,7 @@
            <item>
             <widget class="QLabel" name="label_16">
              <property name="text">
-              <string>Deconvolution using PyCudaDecon package, Richardson-Lucy algorithm</string>
+              <string>Deconvolution using Richardson-Lucy algorithm</string>
              </property>
             </widget>
            </item>
@@ -1753,7 +1753,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEditFilePath" name="lineEdit_NormalizePath"/>
+              <widget class="QLineEditFilePath" name="lineEdit_DeconvRL_DataImPath"/>
              </item>
             </layout>
            </item>
@@ -1774,7 +1774,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEditFilePath" name="lineEdit_NormalizePath"/>
+              <widget class="QLineEditFilePath" name="lineEdit_DeconvRL_PSFImPath"/>
              </item>
             </layout>
            </item>
@@ -1788,7 +1788,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QSpinBox" name="spinBox">
+              <widget class="QSpinBox" name="spinBox_DeconvRL_iterations">
                <property name="minimum">
                 <number>1</number>
                </property>
@@ -1821,7 +1821,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QProgressBar" name="progressBar">
+              <widget class="QProgressBar" name="progressBar_DeconvRL">
                <property name="value">
                 <number>0</number>
                </property>

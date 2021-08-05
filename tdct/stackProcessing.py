@@ -91,11 +91,12 @@ else:
 sys.path.append(execdir)
 try:
 	import tifffile as tf
-	from PyQt5 import QtWidgets
-	from . import clrmsg
-	from . import TDCT_debug
 except:
 	sys.exit("Please install tifffile, e.g.: pip install tifffile")
+
+from PyQt5 import QtWidgets
+from . import clrmsg
+from . import TDCT_debug
 
 debug = TDCT_debug.debug
 

@@ -58,6 +58,7 @@ import webbrowser
 from subprocess import call
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from tdct import clrmsg, TDCT_debug, helpdoc, stackProcessing
+from tdct import deconvolution
 import TDCT_correlation
 from tools3dct.project_fluo import fluo_project_GUI
 from tools3dct.create_mask import create_mask_GUI
@@ -165,6 +166,17 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lineEdit_WorkingDirPath.setText(self.workingdir)
         self.populate_filelist(self.workingdir)
 
+        ## Deconvolution tab
+        ### Select buttons
+        self.toolButton_DeconvRLDataSelect.clicked.connect(lambda: self.selectFile(self.lineEdit_DeconvRL_DataImPath))
+        self.toolButton_DeconvRLPSFDataSelect.clicked.connect(lambda: self.selectFile(self.lineEdit_DeconvRL_PSFImPath))
+        ### Line edits change update (colors change to inform whether the file is valid)
+        self.lineEdit_DeconvRL_DataImPath.textChanged.connect(lambda: self.isValidPath(self.lineEdit_DeconvRL_DataImPath))
+        self.lineEdit_DeconvRL_PSFImPath.textChanged.connect(lambda: self.isValidPath(self.lineEdit_DeconvRL_PSFImPath))
+        ###Command button
+        self.commandLinkButton_Deconvolve.clicked.connect(self.runDeconvolutionTool)
+
+
     def createMask(self):
         self.window_mask = create_mask_GUI(parentWidget=self)
 
@@ -175,30 +187,31 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         Checks if selected file is a valid tiff file and colors the appropriate QLine Edit.
         """
+        #Set default unless conditions are met
+        lineEdit.fileIsValid = False
+        lineEdit.fileIsTiff = False
         if lineEdit.text() == "":
             lineEdit.setStyleSheet(
                 "QLineEdit{background-color: white;} QLineEdit:hover{border: 1px solid grey; background-color white;}")
-            lineEdit.fileIsValid = False
-            lineEdit.fileIsTiff = False
         elif os.path.isfile(lineEdit.text()):
+            lineEdit.fileIsValid = True
+            #Check if file has tif or tiff extension, makes green if true, otherwise orange
             if os.path.splitext(str(lineEdit.text()))[1] in ['.tif','.tiff']:
                 lineEdit.setStyleSheet(
                     "QLineEdit{background-color: rgba(0,255,0,80);}\
                     QLineEdit:hover{border: 1px solid grey; background-color rgba(0,255,0,80);}")
-                lineEdit.fileIsValid = True
                 lineEdit.fileIsTiff = True
             else:
                 lineEdit.setStyleSheet(
                     "QLineEdit{background-color: rgba(255,120,0,80);}\
                     QLineEdit:hover{border: 1px solid grey; background-color rgba(255,120,0,80);}")
-                lineEdit.fileIsValid = True
                 lineEdit.fileIsTiff = False
         else:
+            #Path is not a valid file, turn background to red
             lineEdit.setStyleSheet(
                 "QLineEdit{background-color: rgba(255,0,0,80);}\
                 QLineEdit:hover{border: 1px solid grey; background-color rgba(255,0,0,80);}")
-            lineEdit.fileIsValid = False
-            lineEdit.fileIsTiff = False
+
 
     def isValidPath(self, lineEdit):
         """
@@ -640,6 +653,18 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
             self.progressBar_Mip.reset()
             self.progressBar_Mip.setVisible(False)
 
+    def runDeconvolutionTool(self):
+        #Check files are valid
+        self.isValidFile(self.lineEdit_DeconvRL_DataImPath)
+        self.isValidFile(self.lineEdit_DeconvRL_PSFImPath)
+
+        if self.lineEdit_DeconvRL_DataImPath.fileIsTiff is True and self.lineEdit_DeconvRL_PSFImPath.fileIsTiff is True:
+            
+            deconvolution.doRLDeconvolution(self.lineEdit_DeconvRL_DataImPath.text() , \
+                self.lineEdit_DeconvRL_PSFImPath.text(),\
+                self.spinBox_DeconvRL_iterations.value(),
+                self.progressBar_DeconvRL)
+            
 
 class MovieSplashScreen(QtWidgets.QSplashScreen):
 

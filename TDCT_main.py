@@ -660,7 +660,12 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if self.lineEdit_DeconvRL_DataImPath.fileIsTiff is True and self.lineEdit_DeconvRL_PSFImPath.fileIsTiff is True:
             
-            deconvolution.doRLDeconvolution(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #deconvolution.doRLDeconvolution(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #Uses the newer version of Richrdson-Lucy deconvolution with code based on DeconvolutionLab2
+            #deconvolution.doRLDeconvolution2(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #deconvolution.doRLDeconvolution3(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #deconvolution.doRLDeconvolution4(self.lineEdit_DeconvRL_DataImPath.text() , \
+            deconvolution.doRLDeconvolution5(self.lineEdit_DeconvRL_DataImPath.text() , \
                 self.lineEdit_DeconvRL_PSFImPath.text(),\
                 self.spinBox_DeconvRL_iterations.value(),
                 self.progressBar_DeconvRL)

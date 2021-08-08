@@ -24,32 +24,46 @@ debug = TDCT_debug.debug
 import scipy.signal
 import scipy.fft
 
+#Internal helper class to handle progress bar
+class _progrBarHandle():
+    def __init__(self, qtprocessbar, niter):
+        self.iter=0
+        self.niter = niter
+        self.qtbar = qtprocessbar
+
+        # if self.qtbar:
+        # 	self.qtbar.value= self.iter/self.niter*100
+        # 	QtWidgets.QApplication.processEvents()
+        self.updateUI() #Not working
+    def increment(self):
+        self.iter+=1
+        self.updateUI()
+    def updateUI(self):
+        if self.qtbar:
+            self.qtbar.setValue(self.iter/self.niter*100)
+            QtWidgets.QApplication.processEvents()
+    def setmax(self):
+        self.iter= self.niter
+        self.updateUI()
+
+def _convertAndNormalise(d0):
+    d1= d0.astype('float32')
+    vmax= d0.max()
+    vmin=d0.min()
+    d2 = (d1-vmin)/(vmax-vmin)
+    return d2
+
 def doRLDeconvolution(datapath , psfdatapath , niter=0, qtprocessbar=None):
     #Internal class to handle progress bar
-    class progrBarHandle():
-        def __init__(self, qtprocessbar, niter):
-            self.iter=0
-            self.niter = niter
-            self.qtbar = qtprocessbar
 
-            # if self.qtbar:
-            # 	self.qtbar.value= self.iter/self.niter*100
-            # 	QtWidgets.QApplication.processEvents()
-            self.updateUI() #Not working
-        def increment(self):
-            self.iter+=1
-            self.updateUI()
-        def updateUI(self):
-            if self.qtbar:
-                self.qtbar.setValue(self.iter/self.niter*100)
-                QtWidgets.QApplication.processEvents()
-        def setmax(self):
-            self.iter= self.niter
-            self.updateUI()
+    ''' This code is not giving correct results
+    This is probably because the usage of the psf flipped
+    In a later version doRLDeconvolution5 (based on DeconvolutionLab2 instead of using psf-flipped in the 2nd convolution,
+    a correlation is performed. '''
 
     #Estimate progress iterations
     nProgrIter = 2*niter + 6 #Check if ok
-    progr0 = progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
 
     #Read data
     if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
@@ -63,15 +77,10 @@ def doRLDeconvolution(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
         #Normalise both data (and also converts)
 
-        def convertAndNormalise(d0):
-            d1= d0.astype('float32')
-            vmax= d0.max()
-            vmin=d0.min()
-            d2 = (d1-vmin)/(vmax-vmin)
-            return d2
+
         
-        data_np_norm = convertAndNormalise(data_np)
-        psf_np_norm = convertAndNormalise(psf_np)
+        data_np_norm = _convertAndNormalise(data_np)
+        psf_np_norm = _convertAndNormalise(psf_np)
 
         progr0.increment() #3
 
@@ -99,7 +108,7 @@ def doRLDeconvolution(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
         #At the end xn1 should have the deconvoluted data
         #Convert to uint8
-        data_deconv_norm_256 = convertAndNormalise(xn1)*256
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
         data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
         
         progr0.increment() #5
@@ -119,27 +128,6 @@ def doRLDeconvolution2(datapath , psfdatapath , niter=0, qtprocessbar=None):
     https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/master/src/main/java/deconvolution/algorithm/RichardsonLucy.java
     
     This is not working well, beads are being duplicated in the final volume'''
-    #Internal class to handle progress bar
-    class progrBarHandle():
-        def __init__(self, qtprocessbar, niter):
-            self.iter=0
-            self.niter = niter
-            self.qtbar = qtprocessbar
-
-            # if self.qtbar:
-            # 	self.qtbar.value= self.iter/self.niter*100
-            # 	QtWidgets.QApplication.processEvents()
-            self.updateUI() #Not working
-        def increment(self):
-            self.iter+=1
-            self.updateUI()
-        def updateUI(self):
-            if self.qtbar:
-                self.qtbar.setValue(self.iter/self.niter*100)
-                QtWidgets.QApplication.processEvents()
-        def setmax(self):
-            self.iter= self.niter
-            self.updateUI()
 
     #From https://github.com/scipy/scipy/blob/803e52d7e82cfc027daa55426466da29bc303b5c/scipy/signal/signaltools.py#L385
     def _centered(arr, newshape):
@@ -153,7 +141,7 @@ def doRLDeconvolution2(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
     #Estimate progress iterations
     nProgrIter = 2*niter + 6 #Check if ok
-    progr0 = progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
 
     #Read data
     if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
@@ -166,16 +154,9 @@ def doRLDeconvolution2(datapath , psfdatapath , niter=0, qtprocessbar=None):
         progr0.increment() #2
 
         #Normalise both data (and also converts)
-
-        def convertAndNormalise(d0):
-            d1= d0.astype('float32')
-            vmax= d0.max()
-            vmin=d0.min()
-            d2 = (d1-vmin)/(vmax-vmin)
-            return d2
         
-        data_np_norm = convertAndNormalise(data_np)
-        psf_np_norm = convertAndNormalise(psf_np)
+        data_np_norm = _convertAndNormalise(data_np)
+        psf_np_norm = _convertAndNormalise(psf_np)
 
         progr0.increment() #3
 
@@ -225,7 +206,7 @@ def doRLDeconvolution2(datapath , psfdatapath , niter=0, qtprocessbar=None):
         #At the end xn1 should have the deconvoluted data
         
         #Convert to uint8
-        data_deconv_norm_256 = convertAndNormalise(xn1)*256
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
         data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
         
         progr0.increment() #5
@@ -245,27 +226,6 @@ def doRLDeconvolution3(datapath , psfdatapath , niter=0, qtprocessbar=None):
     https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/master/src/main/java/deconvolution/algorithm/RichardsonLucy.java
     
     Not working well, doubling beads'''
-    #Internal class to handle progress bar
-    class progrBarHandle():
-        def __init__(self, qtprocessbar, niter):
-            self.iter=0
-            self.niter = niter
-            self.qtbar = qtprocessbar
-
-            # if self.qtbar:
-            # 	self.qtbar.value= self.iter/self.niter*100
-            # 	QtWidgets.QApplication.processEvents()
-            self.updateUI() #Not working
-        def increment(self):
-            self.iter+=1
-            self.updateUI()
-        def updateUI(self):
-            if self.qtbar:
-                self.qtbar.setValue(self.iter/self.niter*100)
-                QtWidgets.QApplication.processEvents()
-        def setmax(self):
-            self.iter= self.niter
-            self.updateUI()
 
     #From https://github.com/scipy/scipy/blob/803e52d7e82cfc027daa55426466da29bc303b5c/scipy/signal/signaltools.py#L385
     def _centered(arr, newshape):
@@ -279,7 +239,7 @@ def doRLDeconvolution3(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
     #Estimate progress iterations
     nProgrIter = 2*niter + 6 #Check if ok
-    progr0 = progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
 
     #Read data
     if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
@@ -294,16 +254,9 @@ def doRLDeconvolution3(datapath , psfdatapath , niter=0, qtprocessbar=None):
         #Normalise both data (and also converts)
 
         bestshape = data_np.shape
-
-        def convertAndNormalise(d0):
-            d1= d0.astype('float32')
-            vmax= d0.max()
-            vmin=d0.min()
-            d2 = (d1-vmin)/(vmax-vmin)
-            return d2
         
-        data_np_norm = convertAndNormalise(data_np)
-        psf_np_norm = convertAndNormalise(_centered(psf_np, bestshape))
+        data_np_norm = _convertAndNormalise(data_np)
+        psf_np_norm = _convertAndNormalise(_centered(psf_np, bestshape))
 
         progr0.increment() #3
 
@@ -356,28 +309,9 @@ def doRLDeconvolution4(datapath , psfdatapath , niter=0, qtprocessbar=None):
     '''Deconvolute data using the Richardson Lucy algorithm.
     This code is based on the source code for DeconvolutionLab2
     https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/master/src/main/java/deconvolution/algorithm/RichardsonLucy.java
-    '''
-    #Internal class to handle progress bar
-    class progrBarHandle():
-        def __init__(self, qtprocessbar, niter):
-            self.iter=0
-            self.niter = niter
-            self.qtbar = qtprocessbar
 
-            # if self.qtbar:
-            # 	self.qtbar.value= self.iter/self.niter*100
-            # 	QtWidgets.QApplication.processEvents()
-            self.updateUI() #Not working
-        def increment(self):
-            self.iter+=1
-            self.updateUI()
-        def updateUI(self):
-            if self.qtbar:
-                self.qtbar.setValue(self.iter/self.niter*100)
-                QtWidgets.QApplication.processEvents()
-        def setmax(self):
-            self.iter= self.niter
-            self.updateUI()
+    Not working
+    '''
 
     def _centerarray(arr, newshape):
         #Center current array to newshape.
@@ -422,7 +356,7 @@ def doRLDeconvolution4(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
     #Estimate progress iterations
     nProgrIter = 2*niter + 6 #Check if ok
-    progr0 = progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
 
     #Read data
     if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
@@ -441,19 +375,12 @@ def doRLDeconvolution4(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
         #Gets shape using next_fast_len tool
         bestshape = [scipy.fft.next_fast_len(bestshape0[s0], True) for s0 in range(len(bestshape0))]
-
-        def convertAndNormalise(d0):
-            d1= d0.astype('float32')
-            vmax= d0.max()
-            vmin=d0.min()
-            d2 = (d1-vmin)/(vmax-vmin)
-            return d2
         
         #Normalise
         data_np0 = _centerarray(data_np,bestshape)
-        data_np_norm = convertAndNormalise(data_np0)
+        data_np_norm = _convertAndNormalise(data_np0)
         psf_np0 = _centerarray(psf_np,bestshape)
-        psf_np_norm = convertAndNormalise(psf_np0)
+        psf_np_norm = _convertAndNormalise(psf_np0)
 
         progr0.increment() #3
 
@@ -492,7 +419,7 @@ def doRLDeconvolution4(datapath , psfdatapath , niter=0, qtprocessbar=None):
         xn1 = xn1[fslice]
         
         #Convert to uint8
-        data_deconv_norm_256 = convertAndNormalise(xn1)*256
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
         data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
         
         progr0.increment() #5
@@ -510,32 +437,14 @@ def doRLDeconvolution5(datapath , psfdatapath , niter=0, qtprocessbar=None):
     '''Deconvolute data using the Richardson Lucy algorithm.
     This code is based on the source code for DeconvolutionLab2
     https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/master/src/main/java/deconvolution/algorithm/RichardsonLucy.java
-    '''
-    #Internal class to handle progress bar
-    class progrBarHandle():
-        def __init__(self, qtprocessbar, niter):
-            self.iter=0
-            self.niter = niter
-            self.qtbar = qtprocessbar
+    Instead of doing convolutions using raw fft routines, Here we use convolution algorithms in scipy.signal.convolve and scipy.signal.correlate
 
-            # if self.qtbar:
-            # 	self.qtbar.value= self.iter/self.niter*100
-            # 	QtWidgets.QApplication.processEvents()
-            self.updateUI() #Not working
-        def increment(self):
-            self.iter+=1
-            self.updateUI()
-        def updateUI(self):
-            if self.qtbar:
-                self.qtbar.setValue(self.iter/self.niter*100)
-                QtWidgets.QApplication.processEvents()
-        def setmax(self):
-            self.iter= self.niter
-            self.updateUI()
+    This is working well and appears to give same results as DeconvolutionLab2
+    '''
 
     #Estimate progress iterations
     nProgrIter = 2*niter + 6 #Check if ok
-    progr0 = progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
 
     #Read data
     if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
@@ -548,17 +457,10 @@ def doRLDeconvolution5(datapath , psfdatapath , niter=0, qtprocessbar=None):
         progr0.increment() #2
 
         bestshape = data_np.shape
-
-        def convertAndNormalise(d0):
-            d1= d0.astype('float32')
-            vmax= d0.max()
-            vmin=d0.min()
-            d2 = (d1-vmin)/(vmax-vmin)
-            return d2
         
         #Normalise
-        data_np_norm = convertAndNormalise(data_np)
-        psf_np_norm = convertAndNormalise(psf_np)
+        data_np_norm = _convertAndNormalise(data_np)
+        psf_np_norm = _convertAndNormalise(psf_np)
 
         progr0.increment() #3
 
@@ -585,7 +487,7 @@ def doRLDeconvolution5(datapath , psfdatapath , niter=0, qtprocessbar=None):
         #At the end xn1 should have the deconvoluted data
         
         #Convert to uint8
-        data_deconv_norm_256 = convertAndNormalise(xn1)*256
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
         data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
         
         progr0.increment() #5

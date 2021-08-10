@@ -665,7 +665,8 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
             #deconvolution.doRLDeconvolution2(self.lineEdit_DeconvRL_DataImPath.text() , \
             #deconvolution.doRLDeconvolution3(self.lineEdit_DeconvRL_DataImPath.text() , \
             #deconvolution.doRLDeconvolution4(self.lineEdit_DeconvRL_DataImPath.text() , \
-            deconvolution.doRLDeconvolution5(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #deconvolution.doRLDeconvolution5(self.lineEdit_DeconvRL_DataImPath.text() , \
+            deconvolution.doRLDeconvolution7(self.lineEdit_DeconvRL_DataImPath.text() , \
                 self.lineEdit_DeconvRL_PSFImPath.text(),\
                 self.spinBox_DeconvRL_iterations.value(),
                 self.progressBar_DeconvRL)

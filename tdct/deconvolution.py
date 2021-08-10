@@ -46,12 +46,31 @@ class _progrBarHandle():
         self.iter= self.niter
         self.updateUI()
 
-def _convertAndNormalise(d0):
+# def _convertAndNormalise(d0):
+#     d1= d0.astype('float32')
+#     vmax= d0.max()
+#     vmin=d0.min()
+#     d2 = (d1-vmin)/(vmax-vmin)
+#     return d2
+
+def _convertAndNormalise(d0, doNormalise=True):
     d1= d0.astype('float32')
-    vmax= d0.max()
-    vmin=d0.min()
-    d2 = (d1-vmin)/(vmax-vmin)
-    return d2
+    ret=d1
+    if doNormalise:
+        vmax= d0.max()
+        vmin=d0.min()
+        d2 = (d1-vmin)/(vmax-vmin)
+        ret=d2
+    return ret
+
+def _centered(arr, newshape):
+    # Return the center newshape portion of the array.
+    newshape = np.asarray(newshape)
+    currshape = np.array(arr.shape)
+    startind = (currshape - newshape) // 2
+    endind = startind + newshape
+    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
+    return arr[tuple(myslice)]
 
 def doRLDeconvolution(datapath , psfdatapath , niter=0, qtprocessbar=None):
     #Internal class to handle progress bar
@@ -77,8 +96,6 @@ def doRLDeconvolution(datapath , psfdatapath , niter=0, qtprocessbar=None):
 
         #Normalise both data (and also converts)
 
-
-        
         data_np_norm = _convertAndNormalise(data_np)
         psf_np_norm = _convertAndNormalise(psf_np)
 
@@ -501,3 +518,100 @@ def doRLDeconvolution5(datapath , psfdatapath , niter=0, qtprocessbar=None):
  
         if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)
 
+
+def doRLDeconvolution7(datapath , psfdatapath , niter=0, qtprocessbar=None):
+    '''RL deconvolution based in DeconvolutionLab2 with optional parameter for normalising inputs
+    Reversed engineered convolution and correlation for faster processing
+    https://github.com/scipy/scipy/blob/v1.7.1/scipy/signal/signaltools.py#L1293-L1413
+    for mode='same', method='fft', fftconvolution()
+    normaliseinputs set to false
+    '''
+
+    #no need to swap inputs in mode='same'
+    
+    #Estimate progress iterations
+    nProgrIter = 2*niter + 5 #Check if ok
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+
+    normaliseinputs=False
+
+    #Read data
+    if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
+        if debug is True: print(clrmsg.DEBUG, "Loading images: ", datapath," , ",psfdatapath)
+
+        data_np = tf.imread(datapath)
+        psf_np = tf.imread(psfdatapath)
+
+        progr0.increment() #1
+
+        #Convert and normalise
+        data_np_norm = _convertAndNormalise(data_np,normaliseinputs)
+        psf_np_norm = _convertAndNormalise(psf_np, normaliseinputs)
+
+        s1 = data_np_norm.shape
+        s2 = psf_np_norm.shape
+
+        shape = [(s1[i] + s2[i] - 1) for i in range(data_np_norm.ndim)]
+        fshape = [scipy.fft.next_fast_len(shape[a], True) for a in range(len(shape))]
+
+        #scipy.fft routines need to axes to be provided otherwise they only do FFT in last axes
+        #https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftn.html
+        axes = [i for i in range(data_np_norm.ndim)]
+
+        progr0.increment() #2
+
+        #Precalculated psf_fft
+        psf_fft= scipy.fft.rfftn(psf_np_norm,fshape, axes)
+
+        #and precalculate psfconjugate
+        psf_reverse_i = (slice(None, None, -1),) * psf_np_norm.ndim
+        psf_reverse_conj= psf_np_norm[psf_reverse_i].conj()
+        psf_reverse_conj_fft = scipy.fft.rfftn( psf_reverse_conj,fshape, axes)
+
+        #Precalculate fslice (used to fix image sizes after using fast_len method)
+        fslice = tuple([slice(sz) for sz in shape])
+
+        progr0.increment() #3
+
+        xn1 = np.array(data_np_norm) #initialize copy
+        for i in range(niter):
+            xn=xn1
+
+            #Hx = scipy.signal.convolve(xn, psf_np,mode='same', method='fft')
+            xn_fft = scipy.fft.rfftn(xn,fshape, axes)
+            ret = scipy.fft.irfftn(xn_fft * psf_fft, fshape, axes)
+            #using fast_len, so fix sizes
+            #fslice = tuple([slice(sz) for sz in shape])
+            Hx0 = ret[fslice]
+            Hx = _centered(Hx0, s1).copy() #Fix shape as in mode='same'
+
+            yhx = np.divide(data_np_norm,Hx)
+
+            progr0.increment()
+
+            #correlation of the result with psf (note that is not a convolution)
+            #htyhx = scipy.signal.correlate(yhx, psf_np, mode='same', method='fft')
+            yhx_fft = scipy.fft.rfftn(yhx,fshape, axes)
+            ret = scipy.fft.irfftn(yhx_fft * psf_reverse_conj_fft, fshape, axes)
+            #using fast_len, so fix sizes
+            #fslice = tuple([slice(sz) for sz in shape])
+            htyhx0 = ret[fslice]
+            htyhx = _centered(htyhx0, s1).copy() #Fix shape as in mode='same'
+
+            xn1 = np.multiply(xn, htyhx)
+
+            progr0.increment()
+
+        data_deconv_norm_256 = _convertAndNormalise(xn1,True)*256
+        data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
+        
+        progr0.increment() #4
+
+        #Save data
+        fpath,fname = os.path.split(datapath)
+        fname0 = os.path.join(fpath, "DeconvRL"+str(niter)+"it_"+fname)
+        tf.imsave(fname0 ,data_deconv_uint8)
+
+        progr0.setmax()
+ 
+        if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)

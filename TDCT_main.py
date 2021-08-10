@@ -171,8 +171,8 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
         self.toolButton_DeconvRLDataSelect.clicked.connect(lambda: self.selectFile(self.lineEdit_DeconvRL_DataImPath))
         self.toolButton_DeconvRLPSFDataSelect.clicked.connect(lambda: self.selectFile(self.lineEdit_DeconvRL_PSFImPath))
         ### Line edits change update (colors change to inform whether the file is valid)
-        self.lineEdit_DeconvRL_DataImPath.textChanged.connect(lambda: self.isValidPath(self.lineEdit_DeconvRL_DataImPath))
-        self.lineEdit_DeconvRL_PSFImPath.textChanged.connect(lambda: self.isValidPath(self.lineEdit_DeconvRL_PSFImPath))
+        self.lineEdit_DeconvRL_DataImPath.textChanged.connect(lambda: self.isValidFile(self.lineEdit_DeconvRL_DataImPath))
+        self.lineEdit_DeconvRL_PSFImPath.textChanged.connect(lambda: self.isValidFile(self.lineEdit_DeconvRL_PSFImPath))
         ###Command button
         self.commandLinkButton_Deconvolve.clicked.connect(self.runDeconvolutionTool)
 

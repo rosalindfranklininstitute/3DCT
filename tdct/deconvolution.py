@@ -564,8 +564,14 @@ def doRLDeconvolution7(datapath , psfdatapath , niter=0, qtprocessbar=None):
         psf_fft= scipy.fft.rfftn(psf_np_norm,fshape, axes)
 
         #and precalculate psfconjugate
-        psf_reverse_i = (slice(None, None, -1),) * psf_np_norm.ndim
-        psf_reverse_conj= psf_np_norm[psf_reverse_i].conj()
+        psf_reverse_sliceobj = (slice(None, None, -1),) * psf_np_norm.ndim
+        #This object is for reversing (mirror) an array in all the dimensions, z, y and x axis
+
+        #Reverses the psf and also calculates its conjugate
+        #This is perhaps unnecessary since the psf array is real type
+        psf_reverse_conj= psf_np_norm[psf_reverse_sliceobj].conj()
+        #Probably equivalent to np.flip with axis=None
+
         psf_reverse_conj_fft = scipy.fft.rfftn( psf_reverse_conj,fshape, axes)
 
         #Precalculate fslice (used to fix image sizes after using fast_len method)

@@ -621,3 +621,244 @@ def doRLDeconvolution7(datapath , psfdatapath , niter=0, qtprocessbar=None):
         progr0.setmax()
  
         if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)
+
+
+def doRLDeconvolution10(datapath , psfdatapath , niter=0, qtprocessbar=None):
+    '''RL deconvolution based on doRLDeconvolution7() that was working well
+    Reversed engineered convolution and correlation for faster processing
+    https://github.com/scipy/scipy/blob/v1.7.1/scipy/signal/signaltools.py#L1293-L1413
+    for mode='same', method='fft', fftconvolution() #
+    
+    Simplify by using np.flip and no conjugation
+    Working well
+    '''
+    #Estimate progress iterations
+    nProgrIter = 2*niter + 5 #Check if ok
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+
+    normaliseinputs=False
+
+    #Read data
+    if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
+        if debug is True: print(clrmsg.DEBUG, "Loading images: ", datapath," , ",psfdatapath)
+
+        data_np = tf.imread(datapath)
+        psf_np = tf.imread(psfdatapath)
+
+        progr0.increment() #1
+
+        #Convert and normalise
+        data_np_norm = _convertAndNormalise(data_np,normaliseinputs)
+        psf_np_norm = _convertAndNormalise(psf_np, normaliseinputs)
+
+        s1 = data_np_norm.shape
+        s2 = psf_np_norm.shape
+
+        shape = [(s1[i] + s2[i] - 1) for i in range(data_np_norm.ndim)]
+        fshape = [scipy.fft.next_fast_len(shape[a], True) for a in range(len(shape))]
+
+        #scipy.fft routines need to axes to be provided otherwise they only do FFT in last axes
+        #https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.rfftn.html
+        axes = [i for i in range(data_np_norm.ndim)]
+
+        progr0.increment() #2
+
+        #Precalculated psf_fft
+        psf_fft= scipy.fft.rfftn(psf_np_norm,fshape, axes)
+
+        #and precalculate psf_flip_fft
+        psf_flip = np.flip(psf_np_norm)
+        psf_flip_fft = scipy.fft.rfftn(psf_flip,fshape, axes)
+
+        #Precalculate fslice (used to fix image sizes after using fast_len method)
+        fslice = tuple([slice(sz) for sz in shape])
+
+        progr0.increment() #3
+
+        xn1 = np.array(data_np_norm) #initialize copy
+        for i in range(niter):
+            xn=xn1
+
+            #denominator convolution
+            xn_fft = scipy.fft.rfftn(xn,fshape, axes)
+            ret = scipy.fft.irfftn(xn_fft * psf_fft, fshape, axes)
+            #using fast_len, so fix sizes
+            Hx0 = ret[fslice]
+            Hx = _centered(Hx0, s1).copy() #Fix shape as in mode='same'
+
+            yhx = np.divide(data_np_norm,Hx)
+
+            progr0.increment()
+
+            #2nd convolution
+            yhx_fft = scipy.fft.rfftn(yhx,fshape, axes)
+            ret = scipy.fft.irfftn(yhx_fft * psf_flip_fft, fshape, axes)
+            #using fast_len, so fix sizes
+            htyhx0 = ret[fslice]
+            htyhx = _centered(htyhx0, s1).copy() #Fix shape as in mode='same'
+
+            xn1 = np.multiply(xn, htyhx)
+
+            progr0.increment()
+
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
+        data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
+
+        progr0.increment() #4
+        
+        #Save data
+        fpath,fname = os.path.split(datapath)
+        fname0 = os.path.join(fpath, "DeconvRL"+str(niter)+"it_"+fname)
+        tf.imsave(fname0 ,data_deconv_uint8)
+
+        progr0.setmax()
+ 
+        if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)
+
+
+#An implementation of the circular() routine from DeconvolutionLab2 that shifts the data centre of the psf
+def _circulify3D(data3D):
+    #Check data is 3D
+    if data3D.ndim != 3:
+        raise Exception("Error, input data is not 3-dimensional")
+
+    data0 = np.array(data3D)
+
+    shape = data0.shape
+
+    zdimhalf0 = int(shape[0]/2)
+    zdimhalf1 = shape[0]-zdimhalf0
+
+    ydimhalf0 = int(shape[1]/2)
+    ydimhalf1 = shape[1]-ydimhalf0
+
+    xdimhalf0 = int(shape[2]/2)
+    xdimhalf1 = shape[2]-xdimhalf0
+
+    if zdimhalf0 >=1 and ydimhalf0>=1 and xdimhalf0>=1:
+        data0[zdimhalf1: , ydimhalf1:, xdimhalf1:] = data3D[:zdimhalf0 , :ydimhalf0 , :xdimhalf0 ] #cube 1
+        data0[zdimhalf1: , ydimhalf1:, :xdimhalf1] = data3D[:zdimhalf0 , :ydimhalf0 , xdimhalf0: ] #cube 2
+        data0[zdimhalf1: , :ydimhalf1, :xdimhalf1] = data3D[:zdimhalf0 , ydimhalf0: , xdimhalf0: ] #cube 3
+        data0[zdimhalf1: , :ydimhalf1, xdimhalf1:] = data3D[:zdimhalf0 , ydimhalf0: , :xdimhalf0 ] #cube 4
+        data0[:zdimhalf1 , ydimhalf1:, xdimhalf1:] = data3D[zdimhalf0: , :ydimhalf0 , :xdimhalf0 ] #cube 5
+        data0[:zdimhalf1 , ydimhalf1:, :xdimhalf1] = data3D[zdimhalf0: , :ydimhalf0 , xdimhalf0: ] #cube 6
+        data0[:zdimhalf1 , :ydimhalf1, :xdimhalf1] = data3D[zdimhalf0: , ydimhalf0: , xdimhalf0: ] #cube 7
+        data0[:zdimhalf1 , :ydimhalf1, xdimhalf1:] = data3D[zdimhalf0: , ydimhalf0: , :xdimhalf0 ] #cube 8
+    
+    return data0
+
+def _change3DSizeAs(psf, data):
+    #based in size() code found in
+    #https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/e9af0aba493ba137d70877154648e5583e376a81/src/main/java/signal/RealSignal.java#L531
+    #Adapts psf shape  to the shape of data by padding/cropping
+
+    mz,my, mx = data.shape
+    nz,ny,nx = psf.shape
+
+    psf1 = np.zeros_like( data )
+    
+    vx = min(nx,mx)
+    vy = min(ny,my)
+    vz = min(nz, mz)
+    ox = int((mx - nx) / 2)
+    oy = int((my - ny) / 2)
+    oz = int((mz - nz) / 2)
+
+    for k in range(vz):
+        for j in range(vy):
+            for i in range(vx):
+                pi = i+ox if ox>=0 else i
+                qi = i if ox>=0 else i-ox
+                pj = j+oy if oy>=0 else j
+                qj = j if oy>=0 else j-oy
+                pk = k+oz if oz>=0 else k
+                qk = k if oz>=0 else k-oz
+                psf1[pk,pj,pi] = psf[qk,qj,qi]
+                
+    return psf1
+
+def doRLDeconvolution_DL2_2(datapath , psfdatapath , niter=0, qtprocessbar=None):
+    '''
+    RL deconvolution based in DeconvolutionLab2 with optional parameter for normalising inputs
+    Mimics DeconvolutionLab2 (DL2) as best as possible
+    https://github.com/Biomedical-Imaging-Group/DeconvolutionLab2/blob/master/src/main/java/deconvolution/algorithm/RichardsonLucy.java
+    However it prepares the psf to have the same size as the input data
+    In DeconvolutionLab2 only psf is normalised but here both image data and psf are normalised
+    '''
+    #Copy of DeconvolutionLab2 (DL2)
+    #no need to swap inputs in mode='same'
+    
+    #Estimate progress iterations
+    nProgrIter = 2*niter + 5 #Check if ok
+    progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
+
+    normaliseinputs=False
+
+    #Read data
+    if os.path.isfile(datapath) is True and os.path.isfile(psfdatapath) is True and niter>0:
+        if debug is True: print(clrmsg.DEBUG, "Loading images: ", datapath," , ",psfdatapath)
+
+        data_np = tf.imread(datapath)
+        psf_np = tf.imread(psfdatapath)
+
+        progr0.increment() #1    
+
+        #Convert and normalise
+        data_np_norm =_convertAndNormalise(data_np,False) #don't normalise
+        
+        #Normalise to the sum (not to maximum)
+        psf0 = psf_np.astype('float32')
+        sum = np.sum(psf0)
+        if sum==0:
+            sum=1.0
+        psf_norm = psf0/sum
+
+        #Adapts psf shape to data
+        psf0 = _change3DSizeAs(psf_norm, data_np_norm)
+        #psf1 should have the same dimensions as data
+
+        #Do circulirisation of psf data before starting the RL algorithm
+        psf1 = _circulify3D(psf0)
+
+        progr0.increment() #2
+
+        #Precalculated psf_fft
+        psf_fft= scipy.fft.rfftn(psf1)
+        psf_fft_conj = np.conjugate(psf_fft) #conjugate
+
+        progr0.increment() #3
+
+        xn1 = np.array(data_np_norm) #initialize copy
+        for i in range(niter):
+            xn=xn1
+            xn_fft = scipy.fft.rfftn(xn)  
+            U0 = np.multiply(xn_fft * psf_fft)
+            u0 = scipy.fft.irfftn(U0)
+
+            p = np.divide(data_np_norm,u0)
+
+            progr0.increment()
+
+            U1 = scipy.fft.rfftn(p)
+
+            U2 = np.multiply(U1 * psf_fft_conj)
+
+            u2 = scipy.fft.irfftn(U2)
+
+            xn1 = np.multiply(xn, u2)
+
+            progr0.increment()
+
+        data_deconv_norm_256 = _convertAndNormalise(xn1)*256
+        data_deconv_uint8 = data_deconv_norm_256.astype('uint8')
+
+        progr0.increment() #4
+        
+        #Save data
+        fpath,fname = os.path.split(datapath)
+        fname0 = os.path.join(fpath, "DeconvRL"+str(niter)+"it_"+fname)
+        tf.imsave(fname0 ,data_deconv_uint8)
+        
+        progr0.setmax()
+ 
+        if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)

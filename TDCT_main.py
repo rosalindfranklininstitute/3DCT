@@ -514,8 +514,8 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.lineEdit_selectImage1.text() != "" and self.lineEdit_selectImage2.text() != "":
             if self.lineEdit_selectImage1.fileIsTiff is True and self.lineEdit_selectImage2.fileIsTiff is True:
                 self.correlationModul = TDCT_correlation.Main(
-                    leftImage=str(self.lineEdit_selectImage1.text()),
-                    rightImage=str(self.lineEdit_selectImage2.text()),
+                    leftImagePath=str(self.lineEdit_selectImage1.text()),
+                    rightImagePath=str(self.lineEdit_selectImage2.text()),
                     nosplash=False,
                     workingdir=self.workingdir)
             else:

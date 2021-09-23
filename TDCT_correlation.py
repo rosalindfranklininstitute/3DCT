@@ -59,7 +59,7 @@ if debug is True: print(clrmsg.DEBUG + "Execdir =", execdir)
 
 
 class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
-    def __init__(self, parent=None, leftImage=None, rightImage=None, workingdir=None):
+    def __init__(self, parent=None, leftImagePath=None, rightImagePath=None, workingdir=None):
         if debug is True: print(clrmsg.DEBUG + 'Debug messages enabled')
         QtWidgets.QMainWindow.__init__(self)
         Ui_WidgetWindow.__init__(self)
@@ -101,8 +101,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         ## store parameters for resizing
         self.parent = parent
         self.size = 500
-        self.leftImage = leftImage
-        self.rightImage = rightImage
+        self.leftImagePath = leftImagePath
+        self.rightImagePath = rightImagePath
 
         ## Initialize parameters
         ## left
@@ -160,7 +160,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.toolButton_loadRightImage.clicked.connect(self.openImageRight)
         self.toolButton_resetLeftImage.clicked.connect(lambda: self.resetImageLeft(img=None))
         self.toolButton_resetRightImage.clicked.connect(lambda: self.resetImageRight(img=None))
-        if leftImage is None or rightImage is None:
+        if leftImagePath is None or rightImagePath is None:
             return
         self.initImageLeft()
         self.initImageRight()
@@ -624,23 +624,26 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                                                 ###### Image initialization and rotation ######
                                                 #################### START ####################
     def initImageLeft(self):
-        if self.leftImage is not None:
+        if self.leftImagePath is not None:
             ## Changed GraphicsSceneLeft(self) to QtCustom.QGraphicsSceneCustom(self.graphicsView_left) to reuse class for both scenes
             self.sceneLeft = QtCustom.QGraphicsSceneCustom(self.graphicsView_left,mainWidget=self,side='left',model=self.modelLleft)
             ## set pen color yellow
             self.sceneLeft.pen = QtGui.QPen(QtCore.Qt.red)
             ## Splash screen message
             try:
-                splashscreen.splash.showMessage("Loading images... "+self.leftImage,color=QtCore.Qt.white)
+                splashscreen.splash.showMessage("Loading images... "+self.leftImagePath,color=QtCore.Qt.white)
             except Exception as e:
                 print(clrmsg.WARNING, e)
                 pass
             QtWidgets.QApplication.processEvents()
             ## Get pixel size
-            self.sceneLeft.pixelSize = self.pxSize(self.leftImage)
+            self.sceneLeft.pixelSize = self.pxSize(self.leftImagePath)
             self.sceneLeft.pixelSizeUnit = 'um'
+
             ## Load image, assign it to scene and store image type information
-            self.img_left_layer1,self.sceneLeft.imagetype,self.imgstack_left_layer1 = self.imread(self.leftImage)
+            # Normalises by default
+            self.img_left_layer1,self.sceneLeft.imagetype,self.imgstack_left_layer1 = self.imread(self.leftImagePath)
+
             self.img_left_displayed_layer1 = np.copy(self.img_left_layer1)
             self.img_adj_left_layer1 = np.copy(self.img_left_layer1)
             ## Set slice spinbox maximum
@@ -671,22 +674,22 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             self.graphicsView_left.scale(scaling_factor,scaling_factor)
 
     def initImageRight(self):
-        if self.rightImage is not None:
+        if self.rightImagePath is not None:
             self.sceneRight = QtCustom.QGraphicsSceneCustom(self.graphicsView_right,mainWidget=self,side='right',model=self.modelRight)
             ## set pen color yellow
             self.sceneRight.pen = QtGui.QPen(QtCore.Qt.yellow)
             ## Splash screen message
             try:
-                splashscreen.splash.showMessage("Loading images... "+self.rightImage,color=QtCore.Qt.white)
+                splashscreen.splash.showMessage("Loading images... "+self.rightImagePath,color=QtCore.Qt.white)
             except Exception as e:
                 print(clrmsg.WARNING, e)
                 pass
             QtWidgets.QApplication.processEvents()
             ## Get pixel size
-            self.sceneRight.pixelSize = self.pxSize(self.rightImage)
+            self.sceneRight.pixelSize = self.pxSize(self.rightImagePath)
             self.sceneRight.pixelSizeUnit = 'um'
             ## Load image, assign it to scene and store image type information
-            self.img_right_layer1,self.sceneRight.imagetype,self.imgstack_right_layer1 = self.imread(self.rightImage)
+            self.img_right_layer1,self.sceneRight.imagetype,self.imgstack_right_layer1 = self.imread(self.rightImagePath)
             self.img_right_displayed_layer1 = np.copy(self.img_right_layer1)
             self.img_adj_right_layer1 = np.copy(self.img_right_layer1)
             ## Set slice spinbox maximum
@@ -749,7 +752,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             self.comboBox_channelColorLayer2.setCurrentIndex(0)
             self.comboBox_channelColorLayer3.setCurrentIndex(0)
             ## Load new image
-            self.leftImage = path
+            self.leftImagePath = path
             self.sceneLeft.clear()
             self.initImageLeft()
             self.tableView_left._scene = self.sceneLeft
@@ -793,7 +796,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             self.comboBox_channelColorLayer2.setCurrentIndex(0)
             self.comboBox_channelColorLayer3.setCurrentIndex(0)
             ## Load new image
-            self.rightImage = path
+            self.rightImagePath = path
             self.sceneRight.clear()
             self.initImageRight()
             self.tableView_right._scene = self.sceneRight
@@ -982,7 +985,15 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
     ## Read image
     def imread(self,path,normalize=True):
         """
-        Returns a 2D numpy array (maximum intensity projection for stack image files), the kind of image as 5 bit
+        Returns
+        ( MIP , code , imgdata ) or
+        ( imgdata , code , None)
+
+        check code for details.
+
+        Opens data tiff files
+
+        a 2D numpy array (maximum intensity projection for stack image files), the kind of image as 5 bit
         encoded image property and the original stack file as a numpy array or 'None' if file is 2D image.
 
         return 5 bit encoded image property:
@@ -1001,12 +1012,18 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 img = img*(255.0/img.max())
                 img = img.astype(dtype=np.uint8)
                 if debug is True: print(clrmsg.DEBUG + "Image dtype converted to:", img.shape, img.dtype)
-            if img.ndim == 4:
-                if debug is True: print(clrmsg.DEBUG + "Calculating multichannel MIP")
-                ## return MIP, code 2+8+16 and image stack
-                return np.amax(img, axis=1), 26, img
+            
+            #TODO: convert images that are float type?
+
+            #TODO: If volumes have different channels, we don't want the MIP but all the channels seperated.
+            # if img.ndim == 4:
+            #     if debug is True: print(clrmsg.DEBUG + "Calculating multichannel MIP")
+            #     ## return MIP, code 2+8+16 and image stack
+            #     return np.amax(img, axis=1), 26, img
+
             ## this can only handle rgb. For more channels set "3" to whatever max number of channels should be handled
             elif img.ndim == 3 and any([True for dim in img.shape if dim <= 4]) or img.ndim == 2:
+                #Image is 2D RGB or RGBA, which appears to be 3dimensional
                 if debug is True: print(clrmsg.DEBUG + "Loading regular 2D image... multicolor/normalize:", \
                     [True for x in [img.ndim] if img.ndim == 3],'/',[normalize])
                 if normalize is True:
@@ -1171,6 +1188,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 for i in range(int(img.shape[0])):
                     img[i,:,:] = np.multiply(img[i,:,:], typesize/img[i,:,:].max(), out=img[i,:,:], casting="unsafe")
             else:
+                #2D multichannel image
+                # Merges the channels to a single channel by multiplying all the channels for each pixel
                 if debug is True: print(clrmsg.DEBUG + "multichannel image")
                 for i in range(int(img.shape[2])):
                     img[:,:,i] = np.multiply(img[:,:,i], typesize/img[:,:,i].max(), out=img[:,:,i], casting="unsafe")
@@ -1653,9 +1672,9 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                                                 #################### START ####################
 
     def autosave(self):
-        csv_file_out = os.path.splitext(self.leftImage)[0] + '_coordinates.txt'
+        csv_file_out = os.path.splitext(self.leftImagePath)[0] + '_coordinates.txt'
         csvHandler.model2csv(self.modelLleft,csv_file_out,delimiter="\t")
-        csv_file_out = os.path.splitext(self.rightImage)[0] + '_coordinates.txt'
+        csv_file_out = os.path.splitext(self.rightImagePath)[0] + '_coordinates.txt'
         csvHandler.model2csv(self.modelRight,csv_file_out,delimiter="\t")
 
     def exportPoints(self):
@@ -1669,7 +1688,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         ## Export Dialog. Needs check for extension or add default extension
         csv_file_out, filterdialog = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Export file as',
-            os.path.dirname(self.leftImage) if side == 'left' else os.path.dirname(self.rightImage),
+            os.path.dirname(self.leftImagePath) if side == 'left' else os.path.dirname(self.rightImagePath),
             "Tabstop separated (*.csv *.txt);;Comma separated (*.csv *.txt)")
         self.activateWindow()
         if str(filterdialog).startswith('Comma') is True:
@@ -1683,7 +1702,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
         csv_file_in, filterdialog = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Import file as',
-            os.path.dirname(self.leftImage) if side == 'left' else os.path.dirname(self.rightImage),
+            os.path.dirname(self.leftImagePath) if side == 'left' else os.path.dirname(self.rightImagePath),
             "Tabstop separated (*.csv *.txt);;Comma separated (*.csv *.txt)")
         if csv_file_in != "":
             self.activateWindow()
@@ -2264,7 +2283,7 @@ class Main():
         if workingdir is None:
             workingdir = execdir
 
-        self.window = MainWidget(parent=self,leftImage=leftImage, rightImage=rightImage,workingdir=workingdir)
+        self.window = MainWidget(parent=self,leftImagePath=leftImage, rightImagePath=rightImage,workingdir=workingdir)
         self.window.show()
         self.window.raise_()
 

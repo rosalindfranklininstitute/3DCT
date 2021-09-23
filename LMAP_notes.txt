@@ -33,4 +33,10 @@ To debug, create installer without --windowed flag
 pyinstaller TDCT_main.py --name "3DCorrelationToolbox-RFI" -i "icons\3DCT_icon.ico" --hidden-import="skimage.filters.rank.core_cy_3d" --add-data "TDCT_correlation.ui;." --add-data "TDCT_main.ui;." --add-data "icons_rc.py;."
 
 Getting pyinstaller errors when trying to execute the file
-IMPORTANT - Install pyinstaller using pip instead of conda
+IMPORTANT - Install (pyinstaller AND) PyQt5 using pip instead of conda
+
+pip install pyqt5
+(conda has no pyqt5 but has pyqt, but it does not work with pyinstaller)
+
+Otherwise, you may get the error:
+AttributeError: Module 'PyQt5' has no attribute '__version__'

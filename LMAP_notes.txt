@@ -40,3 +40,10 @@ pip install pyqt5
 
 Otherwise, you may get the error:
 AttributeError: Module 'PyQt5' has no attribute '__version__'
+
+2021/10/08
+Added Reikna GPU deconvolution. Works well in Visual Studio Code (running from command line under conda)
+But pyinstaller executable does not succeed in using GPU.
+It appears that the RedLionfish package is not being included with the 3DCT software
+TODO: Run tests, create pyinstaller packages outside 3DCT.
+

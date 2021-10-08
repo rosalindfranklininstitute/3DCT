@@ -1801,6 +1801,16 @@
               </widget>
              </item>
              <item>
+              <widget class="QCheckBox" name="checkBoxUseGPU">
+               <property name="text">
+                <string>use GPU</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer_26">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -2117,7 +2127,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTest">

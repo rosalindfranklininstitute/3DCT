@@ -666,11 +666,15 @@ class APP(QtWidgets.QMainWindow, Ui_MainWindow):
             #deconvolution.doRLDeconvolution3(self.lineEdit_DeconvRL_DataImPath.text() , \
             #deconvolution.doRLDeconvolution4(self.lineEdit_DeconvRL_DataImPath.text() , \
             #deconvolution.doRLDeconvolution5(self.lineEdit_DeconvRL_DataImPath.text() , \
-            deconvolution.doRLDeconvolution7(self.lineEdit_DeconvRL_DataImPath.text() , \
-                self.lineEdit_DeconvRL_PSFImPath.text(),\
+            # deconvolution.doRLDeconvolution7(self.lineEdit_DeconvRL_DataImPath.text() , \
+            #     self.lineEdit_DeconvRL_PSFImPath.text(),\
+            #     self.spinBox_DeconvRL_iterations.value(),
+            #     self.progressBar_DeconvRL)
+            deconvolution.doRLDeconvolutionFromFiles(self.lineEdit_DeconvRL_DataImPath.text() ,
+                self.lineEdit_DeconvRL_PSFImPath.text(),
                 self.spinBox_DeconvRL_iterations.value(),
+                self.checkBoxUseGPU.isChecked(),
                 self.progressBar_DeconvRL)
-            
 
 class MovieSplashScreen(QtWidgets.QSplashScreen):
 

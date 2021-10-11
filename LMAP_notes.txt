@@ -46,4 +46,7 @@ Added Reikna GPU deconvolution. Works well in Visual Studio Code (running from c
 But pyinstaller executable does not succeed in using GPU.
 It appears that the RedLionfish package is not being included with the 3DCT software
 TODO: Run tests, create pyinstaller packages outside 3DCT.
+Result: 
+[Errno 2] No such file or directory: 'C:\\Users\\Luis\\Desktop\\3DCT-RFI-git\\dist\\3DCorrelationToolbox-RFI\\reikna\\cluda\\kernel.mako'     
 
+TODO: Include the *.mako files in the spec or in the --add

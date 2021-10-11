@@ -244,12 +244,10 @@ ModelManifest.xml
 3DCT_Icon
 dist/
 build/
-# *.spec
+*.spec
 spec/
 __init__.py
 # test/
 .cache/
-3DCorrelationToolbox-RFI.spec
-3DCorrelationToolboxHKHF-RFI-single.spec
 .gitignore
 

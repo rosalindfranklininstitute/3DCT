@@ -9,7 +9,7 @@ pyinstaller TDCT_main.py --name "3DCorrelationToolbox-RFI" -i "icons\3DCT_icon.i
 
 2021/10/11 IMPORTANT
 Reikna - pyinstaler issues. Pyinstaller exectutable cannot find .mako files that are needed for running Reikna GPU accelerations.
-Solution found: mondifyc .spec file manually. Spec file is created when running pyinstaller.
+Solution found: mondify .spec file manually. Spec file is created when running pyinstaller.
 Modify to include the following lines at start:
 `
 import importlib

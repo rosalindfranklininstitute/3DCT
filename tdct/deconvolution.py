@@ -66,7 +66,13 @@ def doRLDeconvolutionFromFiles(datapath , psfdatapath,niter=0, useGPU = True, qt
         def _functCallbackTick():
             progr0.increment()
         
-        data_deconv_uint8 = rld.doRLDeconvolutionFromNpArrays(data_np, psf_np, niter=niter, callbkTickFunc=_functCallbackTick,resAsUint8=True)
+        method='gpu'
+        if not useGPU:
+            method='cpu'
+        
+        data_deconv_uint8 = rld.doRLDeconvolutionFromNpArrays(data_np, psf_np, 
+            niter=niter, callbkTickFunc=_functCallbackTick,resAsUint8=True,
+            method=method)
 
         if not data_deconv_uint8 is None:
 

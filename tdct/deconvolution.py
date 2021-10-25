@@ -26,6 +26,8 @@ import scipy.fft
 
 import RedLionfishDeconv as rld
 
+#import tkinter.messagebox
+
 #Internal helper class to handle progress bar
 class _progrBarHandle():
     def __init__(self, qtprocessbar, maxiter):
@@ -36,6 +38,10 @@ class _progrBarHandle():
         self.updateUI() #Not working
     def increment(self):
         self.iter+=1
+        #If maximum value is reached, restart from zero
+        #In block iteration algorithm, the progress bar only works as a busy indicator
+        if self.iter>=self.maxiter:
+            self.iter=0
         self.updateUI()
     def updateUI(self):
         if self.qtbar:
@@ -62,16 +68,33 @@ def doRLDeconvolutionFromFiles(datapath , psfdatapath,niter=0, useGPU = True, qt
         
         data_deconv_uint8 = rld.doRLDeconvolutionFromNpArrays(data_np, psf_np, niter=niter, callbkTickFunc=_functCallbackTick,resAsUint8=True)
 
-        #Save data
-        fpath,fname = os.path.split(datapath)
-        rootfname, ext = os.path.splitext(fname)
+        if not data_deconv_uint8 is None:
 
-        fname0 = os.path.join(fpath, rootfname+"_DeconvRL_it"+str(niter)+ ext)
-        tf.imsave(fname0 ,data_deconv_uint8)
+            #Save data
+            fpath,fname = os.path.split(datapath)
+            rootfname, ext = os.path.splitext(fname)
 
-        if debug is True: print(clrmsg.DEBUG, "Completed deconvolution, file saved: ", fname0)
+            fname0 = os.path.join(fpath, rootfname+"_DeconvRL_it"+str(niter)+ ext)
+            tf.imsave(fname0 ,data_deconv_uint8)
 
-        progr0.setmax()
+            progr0.setmax()
+
+            if debug is True: print(clrmsg.DEBUG, "Completed RL deconvolution. file saved: ", fname0)
+            
+            #Doesnt work
+            # QtWidgets.QMessageBox.about(progr0.parent(), f"Completed RL deconvolution. File save as {str(fname0)} .")
+            #tkinter.messagebox.showinfo("RL Deconvolution completed", f"File save as {str(fname0)} .")
+
+            QtWidgets.QMessageBox.about(None,"RL Deconvolution completed", f"Result saved in file\n{str(fname0)}" )
+
+        else:
+            #deconvolution failed
+            if debug is True: print(clrmsg.DEBUG, "RL Deconvolution failed.")
+
+            #tkinter.messagebox.showerror("Error", "RL Deconvolution failed.")
+            QtWidgets.QMessageBox.about(None,"Error", "RL Deconvolution failed.")
+
+
 
         #No return needed
 

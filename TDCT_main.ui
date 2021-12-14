@@ -1811,6 +1811,16 @@
               </widget>
              </item>
              <item>
+              <widget class="QCheckBox" name="checkBoxDebug">
+               <property name="toolTip">
+                <string extracomment="Print debug (INFO) in console"/>
+               </property>
+               <property name="text">
+                <string>Debug</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer_26">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>

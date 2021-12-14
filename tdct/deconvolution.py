@@ -52,7 +52,17 @@ class _progrBarHandle():
         self.updateUI()
 
 
-def doRLDeconvolutionFromFiles(datapath , psfdatapath,niter=0, useGPU = True, qtprocessbar=None):
+def doRLDeconvolutionFromFiles(datapath , psfdatapath,niter=0, useGPU = True, qtprocessbar=None, debug_deconv=False):
+    #Runs the Richardson-Lucy deconvolution, provided the path of data and PSF
+    # for niter iterations
+    # Can try or not use GPU for the calculation
+    # Progress bar is to provide feedback of the calculation progress
+    # Debug_deconv, is used to choose whether user wants to print debug information on the console or not
+
+    if debug_deconv:
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        
     #Sets up progress bar
     nProgrIter=niter+2
     progr0 = _progrBarHandle(qtprocessbar, nProgrIter) #Sets up
@@ -66,9 +76,9 @@ def doRLDeconvolutionFromFiles(datapath , psfdatapath,niter=0, useGPU = True, qt
         def _functCallbackTick():
             progr0.increment()
         
-        method='gpu'
-        if not useGPU:
-            method='cpu'
+        method='cpu'
+        if useGPU:
+            method='gpu'
         
         data_deconv_uint8 = rld.doRLDeconvolutionFromNpArrays(data_np, psf_np, 
             niter=niter, callbkTickFunc=_functCallbackTick,resAsUint8=True,

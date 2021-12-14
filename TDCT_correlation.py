@@ -1006,23 +1006,17 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         if debug is True: print(clrmsg.DEBUG + "===== imread")
         try:
             img = tf.imread(path)
-            if debug is True: print(clrmsg.DEBUG + "Image shape/dtype:", img.shape, img.dtype)
+            if debug is True: print(clrmsg.DEBUG + "Image shape/dtype:"+ str(img.shape)+ img.dtype)
             ## Displaying issues with uint16 images -> convert to uint8
             if img.dtype == 'uint16':
                 img = img*(255.0/img.max())
                 img = img.astype(dtype=np.uint8)
-                if debug is True: print(clrmsg.DEBUG + "Image dtype converted to:", img.shape, img.dtype)
+                if debug is True: print(clrmsg.DEBUG + "Image dtype converted to:"+ str(img.shape)+ img.dtype)
             
             #TODO: convert images that are float type?
-
-            #TODO: If volumes have different channels, we don't want the MIP but all the channels seperated.
-            # if img.ndim == 4:
-            #     if debug is True: print(clrmsg.DEBUG + "Calculating multichannel MIP")
-            #     ## return MIP, code 2+8+16 and image stack
-            #     return np.amax(img, axis=1), 26, img
-
+            
             ## this can only handle rgb. For more channels set "3" to whatever max number of channels should be handled
-            elif img.ndim == 3 and any([True for dim in img.shape if dim <= 4]) or img.ndim == 2:
+            if img.ndim == 2 or img.ndim == 3 and any([True for dim in img.shape if dim <= 4]) :
                 #Image is 2D RGB or RGBA, which appears to be 3dimensional
                 if debug is True: print(clrmsg.DEBUG + "Loading regular 2D image... multicolor/normalize:", \
                     [True for x in [img.ndim] if img.ndim == 3],'/',[normalize])
@@ -1037,8 +1031,18 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 if debug is True: print(clrmsg.DEBUG + "Calculating MIP")
                 ## return MIP and code 2+4+1E6
                 return np.amax(img, axis=0), 22, img
+            
+            #TODO: If volumes have different channels, we don't want the MIP but all the channels seperated.
+            # elif img.ndim == 4:
+            #     if debug is True: print(clrmsg.DEBUG + "Calculating multichannel MIP")
+            #     ## return MIP, code 2+8+16 and image stack
+            #     return np.amax(img, axis=1), 26, img
+
         except (FileNotFoundError, ValueError):
-            return None, None, None
+            if debug is True: print("Error reading and processing image")
+
+        # This is the default buy only returns this something went wrong or could not identify image
+        return None,None,None 
 
     def pxSize(self,img_path,z=False):
         with tf.TiffFile(img_path) as tif:
@@ -2231,7 +2235,7 @@ class SplashScreen():
 
 
 class Main():
-    def __init__(self,leftImage=None,rightImage=None,nosplash=False,workingdir=None):
+    def __init__(self,leftImagePath=None,rightImagePath=None,nosplash=False,workingdir=None):
         """Class for running this application either as standalone or as imported QT Widget
 
         args:
@@ -2239,7 +2243,7 @@ class Main():
                             from it.
 
         kwargs:
-                leftImage:	string, required
+                leftImagePath :	string, required
                             Path to first image.
                             The image has to be a tiff file. It can be a gray-scale 2D image (y,x)
                             or 3D image stack (z,y,x). Color channels are supported as well like (y,x,c) or (z,c,y,x)
@@ -2248,9 +2252,9 @@ class Main():
                             means, if the image contains more than 3 channels, the color channel detection can result
                             in funny and wrong image reads.
 
-                rightImage:	string, required
+                rightImagePath :	string, required
                             Path to first image.
-                            See "leftImage".
+                            See "leftImagePath ".
 
                 nosplash:	bool, optional
                             If True, a splash screen showing which image is being loaded at the moment is rendered at
@@ -2267,14 +2271,14 @@ class Main():
         # inside of the qt (main) widget:
             ...
             self.correlationModul = TDCT_correlation.Main(
-                                                        leftImage="path/to/first/image.tif",
-                                                        rightImage="path/to/second/image.tif",
+                                                        leftImagePath ="path/to/first/image.tif",
+                                                        rightImagePath ="path/to/second/image.tif",
                                                         nosplash=False,
                                                         workingdir="path/to/workingdir")
         """
         self.exitstatus = 1
-        if leftImage is None or rightImage is None:
-            sys.exit("Please pass 'leftImage=PATH' and 'rightImage=PATH' to this function")
+        if leftImagePath is None or rightImagePath is None:
+            sys.exit("Please pass 'leftImagePath =PATH' and 'rightImagePath =PATH' to this function")
 
         if nosplash is False:
             global splashscreen
@@ -2283,7 +2287,7 @@ class Main():
         if workingdir is None:
             workingdir = execdir
 
-        self.window = MainWidget(parent=self,leftImagePath=leftImage, rightImagePath=rightImage,workingdir=workingdir)
+        self.window = MainWidget(parent=self,leftImagePath=leftImagePath , rightImagePath=rightImagePath ,workingdir=workingdir)
         self.window.show()
         self.window.raise_()
 
@@ -2322,6 +2326,6 @@ if __name__ == "__main__":
     # right = '/Users/jan/Desktop/correlation_test_dataset/LM_green_image_stack_reslized.tif'
     # right = '/Users/jan/Desktop/correlation_test_dataset/single_tif_files/single_tif_files_0.tif'
 
-    main = Main(leftImage=left,rightImage=right)
+    main = Main(leftImagePath =left,rightImagePath =right)
 
     sys.exit(app.exec_())

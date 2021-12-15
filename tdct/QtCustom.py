@@ -640,7 +640,7 @@ class MatplotlibWidgetCustom(QtWidgets.QWidget):
             for i in range(n):
                 self.figure.axes[i].change_geometry(n + 1, 1, i + 1)
             self.subplotMat = self.figure.add_subplot(n + 1, 1, n + 1)
-            self.figure.tight_layout()
+            self.figure.tight_layout() #TODO: Sometimes it does not work
             self.figure.subplots_adjust(bottom=0)
         # self.subplotMat.plot(np.arange(100),np.random.random(100)*10)
         # mat = tf.imread('/Users/jan/Desktop/dot2.tif')

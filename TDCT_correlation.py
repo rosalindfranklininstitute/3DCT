@@ -2218,8 +2218,9 @@ class SplashScreen():
         painter.begin(splash_pix)
         painter.setPen(QtCore.Qt.white)
         painter.drawText(
-            0,0,
-            splash_pix.size().width()-3,splash_pix.size().height()-1,QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight, __version__)
+            0, 0,
+            splash_pix.size().width()-3, splash_pix.size().height()-1,
+            int(QtCore.Qt.AlignBottom) | int(QtCore.Qt.AlignRight), __version__)
         painter.end()
         ## Show splash screen
         self.splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)

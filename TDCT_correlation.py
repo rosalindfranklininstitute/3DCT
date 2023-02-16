@@ -57,7 +57,17 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
-qtCreatorFile_main = os.path.join(execdir, "TDCT_correlation.ui")
+''' The user interface is in the *.ui file
+To modify the User interface, make sure pyqt5-tools is installed
+and then run from the command line
+> qt5-tools designer
+
+and open the *.ui file
+
+Please note that interactivity must be coded here.
+'''
+
+qtCreatorFile_main = os.path.join(execdir, "TDCT_correlation2.ui")
 Ui_WidgetWindow, QtBaseClass = uic.loadUiType(qtCreatorFile_main)
 
 debug = TDCT_debug.debug
@@ -92,13 +102,13 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.poiColor = (0,0,255)
 
         ## Tableview and models
-        self.modelLleft = QtCustom.QStandardItemModelCustom(self)
-        self.tableView_left.setModel(self.modelLleft)
-        self.modelLleft.tableview = self.tableView_left
+        self.model_Left = QtCustom.QStandardItemModelCustom(self)
+        self.tableView_left.setModel(self.model_Left)
+        self.model_Left.tableview = self.tableView_left
 
-        self.modelRight = QtCustom.QStandardItemModelCustom(self)
-        self.tableView_right.setModel(self.modelRight)
-        self.modelRight.tableview = self.tableView_right
+        self.model_Right = QtCustom.QStandardItemModelCustom(self)
+        self.tableView_right.setModel(self.model_Right)
+        self.model_Right.tableview = self.tableView_right
 
         self.modelResults = QtGui.QStandardItemModel(self)
         self.modelResultsProxy = QtCustom.NumberSortModel()
@@ -173,8 +183,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.initImageRight()
 
         ## connect item change signal to write changes in model back to QGraphicItems as well as highlighting selected points
-        self.modelLleft.itemChanged.connect(self.tableView_left.updateItems)
-        self.modelRight.itemChanged.connect(self.tableView_right.updateItems)
+        self.model_Left.itemChanged.connect(self.tableView_left.updateItems)
+        self.model_Right.itemChanged.connect(self.tableView_right.updateItems)
         self.tableView_left.selectionModel().selectionChanged.connect(self.tableView_left.showSelectedItem)
         self.tableView_right.selectionModel().selectionChanged.connect(self.tableView_right.showSelectedItem)
         self.tableView_results.selectionModel().selectionChanged.connect(self.showSelectedResidual)
@@ -235,8 +245,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         QtWidgets.QApplication.instance().focusChanged.connect(self.changedFocusSlot)
 
         ## Pass models and scenes to tableview for easy access
-        self.tableView_left._model = self.modelLleft
-        self.tableView_right._model = self.modelRight
+        self.tableView_left._model = self.model_Left
+        self.tableView_right._model = self.model_Right
         self.tableView_left._scene = self.sceneLeft
         self.tableView_right._scene = self.sceneRight
 
@@ -557,25 +567,25 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.horizontalSlider_contrast.blockSignals(False)
 
     def colorModels(self):
-        rowsLeft = self.modelLleft.rowCount()
-        rowsRight = self.modelRight.rowCount()
+        rowsLeft = self.model_Left.rowCount()
+        rowsRight = self.model_Right.rowCount()
         alpha = 100
-        self.modelLleft.blockSignals(True) # prevents recursive behaviour when updating item
-        self.modelRight.blockSignals(True)
+        self.model_Left.blockSignals(True) # prevents recursive behaviour when updating item
+        self.model_Right.blockSignals(True)
         for row in range(min([rowsLeft,rowsRight])):
             color_correlate = (50,220,175,alpha)
             if rowsLeft != 0:
                 try:
-                    self.modelLleft.item(row, 0).setBackground(QtGui.QColor(*color_correlate))
-                    self.modelLleft.item(row, 1).setBackground(QtGui.QColor(*color_correlate))
-                    self.modelLleft.item(row, 2).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Left.item(row, 0).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Left.item(row, 1).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Left.item(row, 2).setBackground(QtGui.QColor(*color_correlate))
                 except:
                     if debug is True: print(clrmsg.DEBUG + "Model item is None")
             if rowsRight != 0:
                 try:
-                    self.modelRight.item(row, 0).setBackground(QtGui.QColor(*color_correlate))
-                    self.modelRight.item(row, 1).setBackground(QtGui.QColor(*color_correlate))
-                    self.modelRight.item(row, 2).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Right.item(row, 0).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Right.item(row, 1).setBackground(QtGui.QColor(*color_correlate))
+                    self.model_Right.item(row, 2).setBackground(QtGui.QColor(*color_correlate))
                 except:
                     if debug is True: print(clrmsg.DEBUG + "Model item is None")
         if rowsLeft > rowsRight:
@@ -586,9 +596,9 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 color_overflow = (220,25,105,alpha)  # red(ish) color to indicate unbalanced amount of markers for correlation
             for row in range(rowsRight,rowsLeft):
                 try:
-                    self.modelLleft.item(row, 0).setBackground(QtGui.QColor(*color_overflow))
-                    self.modelLleft.item(row, 1).setBackground(QtGui.QColor(*color_overflow))
-                    self.modelLleft.item(row, 2).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Left.item(row, 0).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Left.item(row, 1).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Left.item(row, 2).setBackground(QtGui.QColor(*color_overflow))
                 except:
                     if debug is True: print(clrmsg.DEBUG + "Model item is None")
         elif rowsLeft < rowsRight:
@@ -599,13 +609,13 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 color_overflow = (220,25,105,alpha)  # red(ish) color to indicate unbalanced amount of markers for correlation
             for row in range(rowsLeft,rowsRight):
                 try:
-                    self.modelRight.item(row, 0).setBackground(QtGui.QColor(*color_overflow))
-                    self.modelRight.item(row, 1).setBackground(QtGui.QColor(*color_overflow))
-                    self.modelRight.item(row, 2).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Right.item(row, 0).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Right.item(row, 1).setBackground(QtGui.QColor(*color_overflow))
+                    self.model_Right.item(row, 2).setBackground(QtGui.QColor(*color_overflow))
                 except:
                     if debug is True: print(clrmsg.DEBUG + "Model item is None")
-        self.modelLleft.blockSignals(False)
-        self.modelRight.blockSignals(False)
+        self.model_Left.blockSignals(False)
+        self.model_Right.blockSignals(False)
 
     def getMarkerColor(self):
         color = QtWidgets.QColorDialog.getColor()
@@ -633,7 +643,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
     def initImageLeft(self):
         if self.leftImagePath is not None:
             ## Changed GraphicsSceneLeft(self) to QtCustom.QGraphicsSceneCustom(self.graphicsView_left) to reuse class for both scenes
-            self.sceneLeft = QtCustom.QGraphicsSceneCustom(self.graphicsView_left,mainWidget=self,side='left',model=self.modelLleft)
+            self.sceneLeft = QtCustom.QGraphicsSceneCustom(self.graphicsView_left,mainWidget=self,side='left',model=self.model_Left)
             ## set pen color yellow
             self.sceneLeft.pen = QtGui.QPen(QtCore.Qt.red)
             ## Splash screen message
@@ -682,7 +692,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
     def initImageRight(self):
         if self.rightImagePath is not None:
-            self.sceneRight = QtCustom.QGraphicsSceneCustom(self.graphicsView_right,mainWidget=self,side='right',model=self.modelRight)
+            self.sceneRight = QtCustom.QGraphicsSceneCustom(self.graphicsView_right,mainWidget=self,side='right',model=self.model_Right)
             ## set pen color yellow
             self.sceneRight.pen = QtGui.QPen(QtCore.Qt.yellow)
             ## Splash screen message
@@ -1684,18 +1694,18 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
     def autosave(self):
         csv_file_out = os.path.splitext(self.leftImagePath)[0] + '_coordinates.txt'
-        csvHandler.model2csv(self.modelLleft,csv_file_out,delimiter="\t")
+        csvHandler.model2csv(self.model_Left,csv_file_out,delimiter="\t")
         csv_file_out = os.path.splitext(self.rightImagePath)[0] + '_coordinates.txt'
-        csvHandler.model2csv(self.modelRight,csv_file_out,delimiter="\t")
+        csvHandler.model2csv(self.model_Right,csv_file_out,delimiter="\t")
 
     def exportPoints(self):
         ## bugfix for KDE file dialog
         side = self.label_selectedTable.text()
 
         if side == 'left':
-            model = self.modelLleft
+            model = self.model_Left
         elif side == 'right':
-            model = self.modelRight
+            model = self.model_Right
         ## Export Dialog. Needs check for extension or add default extension
         csv_file_out, filterdialog = QtWidgets.QFileDialog.getSaveFileName(
             self, 'Export file as',
@@ -1747,7 +1757,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                                                 ######            Correlation           #######
                                                 #################### START ####################
 
-    def model2np(self,model,rows):
+    def model_to_np(self,model,rows):
         """
         Convert Qt model to numpy array.
         Pass the model and the range of rows to convert. E.g. if the model has rows nr 1,2,3,4,5,6,7,8
@@ -1763,8 +1773,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
     def correlate(self):
         if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
-            model2D = self.modelLleft
-            model3D = self.modelRight
+            model2D = self.model_Left
+            model3D = self.model_Right
             ## Temporary img to draw results and save it
             img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
             imgSide = 'left'
@@ -1785,8 +1795,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 ## Need RGB for colored markers
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
-            model2D = self.modelRight
-            model3D = self.modelLleft
+            model2D = self.model_Right
+            model3D = self.model_Left
             ## Temporary img to draw results and save it
             img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
             imgSide = 'right'
@@ -1824,8 +1834,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                     return None
 
             if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
-                rowsLeft = self.modelLleft.rowCount()
-                rowsRight = self.modelRight.rowCount()
+                rowsLeft = self.model_Left.rowCount()
+                rowsRight = self.model_Right.rowCount()
                 if rowsLeft > rowsRight:
                     corrMsgBoxRetVal = 'l2r'
                 elif rowsLeft < rowsRight:
@@ -1835,14 +1845,14 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                         self,"It seems you want to do a 3D to 3D correlation. " +
                         "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
                 if corrMsgBoxRetVal == 'l2r':
-                    model2D = self.modelRight
-                    model3D = self.modelLleft
+                    model2D = self.model_Right
+                    model3D = self.model_Left
                     ## Temporary img to draw results and save it
                     img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
                     imgSide = 'right'
                 elif corrMsgBoxRetVal == 'r2l':
-                    model2D = self.modelLleft
-                    model3D = self.modelRight
+                    model2D = self.model_Left
+                    model3D = self.model_Right
                     ## Temporary img to draw results and save it
                     img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
                     imgSide = 'left'
@@ -1855,8 +1865,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 # QtWidgets.QMessageBox.critical(self, "Data Structure",'Both datasets contain only 3D information. I need one 3D and one 2D dataset')
                 # raise ValueError('Both datasets contain only 3D information. I need one 3D and one 2D dataset')
             elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
-                rowsLeft = self.modelLleft.rowCount()
-                rowsRight = self.modelRight.rowCount()
+                rowsLeft = self.model_Left.rowCount()
+                rowsRight = self.model_Right.rowCount()
                 if rowsLeft > rowsRight:
                     corrMsgBoxRetVal = 'l2r'
                 elif rowsLeft < rowsRight:
@@ -1866,14 +1876,14 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                             self,"It seems you want to do a 2D to 2D correlation. " +
                             "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
                 if corrMsgBoxRetVal == 'l2r':
-                    model2D = self.modelRight
-                    model3D = self.modelLleft
+                    model2D = self.model_Right
+                    model3D = self.model_Left
                     ## Temporary img to draw results and save it
                     img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
                     imgSide = 'right'
                 elif corrMsgBoxRetVal == 'r2l':
-                    model2D = self.modelLleft
-                    model3D = self.modelRight
+                    model2D = self.model_Left
+                    model3D = self.model_Right
                     ## Temporary img to draw results and save it
                     img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
                     imgSide = 'left'
@@ -1905,35 +1915,69 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             if nrRowsModel2D <= nrRowsModel3D:
                 timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
-                if self.correlInitialParamRandomChkBx.isChecked():
-                    #Use random initial rotations and parameters to optimize correlation
-                    self.correlation_results = correlation.main(
-                                                            markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
-                                                            markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
-                                                            spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
-                                                            rotation_center=self.rotation_center,
-                                                            results_file=''.join([
-                                                                self.workingdir,'/',timestamp, '_correlation.txt'
-                                                                ] if self.checkBox_writeReport.isChecked() else ''),
-                                                            imageProps=imageProps
-                                                            )
-                else:
-                    #Use specified initial parameters
-                    self.correlation_results = correlation.main_withInitParams(
-                                                            markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
-                                                            markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
-                                                            spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
-                                                            rotation_center=self.rotation_center,
-                                                            psi0= self.corrInitParamPsiDoubleSpinBox.value(),
-                                                            phi0= self.corrInitParamPhiDoubleSpinBox.value(),
-                                                            theta0= self.corrInitParamThetaDoubleSpinBox.value(),
-                                                            scale0= self.corrInitParamScaleDoubleSpinBox.value(),
-                                                            results_file=''.join([
-                                                                self.workingdir,'/',timestamp, '_correlation.txt'
-                                                                ] if self.checkBox_writeReport.isChecked() else ''),
-                                                            imageProps=imageProps
-                                                            )
 
+                # if self.correlInitialParamRandomChkBx.isChecked():
+                #     #Use random initial rotations and parameters to optimize correlation
+                #     self.correlation_results = correlation.main(
+                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
+                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
+                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                #                                             rotation_center=self.rotation_center,
+                #                                             results_file=''.join([
+                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
+                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
+                #                                             imageProps=imageProps
+                #                                             )
+                # else:
+                #     #Use specified initial parameters
+                #     self.correlation_results = correlation.main_withInitParams(
+                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
+                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
+                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                #                                             rotation_center=self.rotation_center,
+                #                                             psi0= self.corrInitParamPsiDoubleSpinBox.value(),
+                #                                             phi0= self.corrInitParamPhiDoubleSpinBox.value(),
+                #                                             theta0= self.corrInitParamThetaDoubleSpinBox.value(),
+                #                                             scale0= self.corrInitParamScaleDoubleSpinBox.value(),
+                #                                             results_file=''.join([
+                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
+                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
+                #                                             imageProps=imageProps
+                #                                             )
+
+                rotation_init_deg=None
+                scale_init=None
+                if self.correlGuessParametersChkBx.isChecked():
+                    #extract guess parameters
+                    psi0= self.corrInitParamPsiDoubleSpinBox.value()
+                    phi0= self.corrInitParamPhiDoubleSpinBox.value()
+                    theta0= self.corrInitParamThetaDoubleSpinBox.value()
+                    scale0= self.corrInitParamScaleDoubleSpinBox.value()
+
+                    rotation_init_deg=np.array([phi0, theta0, psi0], dtype=np.float32)
+                    scale_init= scale0
+
+                ninit=1
+                random=False
+                if self.correlInitialParamRandomChkBx.isChecked():
+                    random=True
+                    ninit= self.corrInitParamNRandomsSpinBox.value()
+                
+                #Use random initial rotations and parameters to optimize correlation
+                self.correlation_results = correlation.main2(
+                                                        markers_3d=self.model_to_np(model3D,[0,nrRowsModel2D]),
+                                                        markers_2d=self.model_to_np(model2D,[0,nrRowsModel2D]),
+                                                        spots_3d=self.model_to_np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                                                        rotation_center=self.rotation_center,
+                                                        results_file=''.join([
+                                                            self.workingdir,'/',timestamp, '_correlation.txt'
+                                                            ] if self.checkBox_writeReport.isChecked() else ''),
+                                                        imageProps=imageProps,
+                                                        rotation_init_deg=rotation_init_deg,
+                                                        scale_init=scale_init,
+                                                        ninit=ninit,
+                                                        random=random
+                                                        )
 
             else:
                 QtWidgets.QMessageBox.critical(self, "Data Structure", "The two datasets do not contain the same amount of markers!")
@@ -2022,7 +2066,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.displayResults(frame=self.checkBox_scatterPlotFrame.isChecked(),framesize=self.doubleSpinBox_scatterPlotFrameSize.value())
         model2D.tableview._scene.deleteArrows()
         for i in range(nrRowsModel2D):
-            model2D.tableview._scene.addArrow(self.model2np(
+            model2D.tableview._scene.addArrow(self.model_to_np(
                 model2D,[0,nrRowsModel2D])[i,:2],self.correlation_results[1][:2,i],arrowangle=45,color=QtCore.Qt.red)
 
     def displayResults(self,frame=False,framesize=None):

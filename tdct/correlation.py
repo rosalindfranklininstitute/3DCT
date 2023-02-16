@@ -420,3 +420,99 @@ def main_withInitParams(markers_3d,markers_2d,spots_3d,rotation_center,psi0, phi
     # delta calc,real
     delta2D = transf_3d[:2,:] - mark_2d
     return [transf, transf_3d, spots_2d, delta2D, cm_3D_markers, modified_translation]
+
+
+def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProps=None,*, rotation_init_deg=None, scale_init=None, ninit=10, random=True):
+    '''
+    Modified to include initial parameters.
+    Calculates the best way to correlate 3D points to 2D points by using
+    rotation, scale and translation operations.
+
+    Parameters:
+    markers_3d:
+
+    '''
+    
+    if rotation_init_deg is None:
+        einit = 'gl2'
+    else:
+        rotation_init_deg = np.array(rotation_init_deg, dtype=np.float32)
+        rotation_init_rad = rotation_init_deg * np.pi / 180
+        einit = Rigid3D.euler_to_ck(angles=rotation_init_deg, mode='x')
+
+    restrict_rotations = 0.1
+
+    scale=None #If this value is provided, it would fix the scale
+    if scale_init is None:
+        scale_init = 'gl2'
+    
+    if ninit is None:
+        ninit = 10
+    elif ninit<=1:
+        ninit=1
+    
+    random_scale = False
+    random_rotations = False
+    if random==True:
+        random_scale = True
+        random_rotations = True
+
+    # read fluo markers
+    mark_3d = markers_3d[list(range(markers_3d.shape[0]))].transpose()
+
+    # read ib markers
+    mark_2d = markers_2d[list(range(markers_2d.shape[0]))][:,:2].transpose()
+
+    # establish correlation
+    transf = Rigid3D.find_32(
+        x=mark_3d, y=mark_2d, scale=scale,
+        randome=random_rotations, einit=einit, einit_dist=restrict_rotations,
+        randoms=random_scale, sinit=scale_init, ninit=ninit)
+
+    if imageProps:
+        # establish correlation for cubic rotation (offset added to coordinates)
+        offsetZ = (max(imageProps[2])-imageProps[2][0])*0.5
+        offsetY = (max(imageProps[2])-imageProps[2][1])*0.5
+        offsetX = (max(imageProps[2])-imageProps[2][2])*0.5
+        print(offsetZ, offsetY, offsetX)
+        mark_3d_cube = np.copy(mark_3d)
+        mark_3d_cube[0] += offsetX
+        mark_3d_cube[1] += offsetY
+        mark_3d_cube[2] += offsetZ
+
+        transf_cube = Rigid3D.find_32(
+            x=mark_3d_cube, y=mark_2d, scale=scale,
+            randome=random_rotations, einit=einit, einit_dist=restrict_rotations,
+            randoms=random_scale, sinit=scale_init, ninit=ninit)
+    else:
+        transf_cube = transf
+
+    # fluo spots
+    spots_3d = spots_3d[list(range(spots_3d.shape[0]))].transpose()
+
+    # correlate spots
+    if spots_3d.shape[0] != 0:
+        spots_2d = transf.transform(x=spots_3d)
+    else:
+        spots_2d = None
+
+    # transform markers
+    transf_3d = transf.transform(x=mark_3d)
+
+    # calculate translation if rotation center is not at (0,0,0)
+    modified_translation = transf_cube.recalculate_translation(
+        rotation_center=rotation_center)
+    # print 'modified_translation: ', modified_translation
+
+    # write transformation params and correlation
+    if results_file != '':
+        write_results(
+            transf=transf, res_file_name=results_file,
+            spots_3d=spots_3d, spots_2d=spots_2d,
+            markers_3d=mark_3d, transformed_3d=transf_3d, markers_2d=mark_2d,
+            rotation_center=rotation_center, modified_translation=modified_translation,imageProps=imageProps)
+    cm_3D_markers = mark_3d.mean(axis=-1).tolist()
+
+    # delta calc,real
+    delta2D = transf_3d[:2,:] - mark_2d
+    return [transf, transf_3d, spots_2d, delta2D, cm_3D_markers, modified_translation]

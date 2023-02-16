@@ -50,6 +50,13 @@ else:
     execdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(execdir)
 
+#Try fix DPI
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1" # 0,1,2 Don't work
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+
 qtCreatorFile_main = os.path.join(execdir, "TDCT_correlation.ui")
 Ui_WidgetWindow, QtBaseClass = uic.loadUiType(qtCreatorFile_main)
 

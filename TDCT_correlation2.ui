@@ -219,7 +219,7 @@
              <enum>QTabWidget::Rounded</enum>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="ctrlTab">
              <property name="minimumSize">
@@ -1131,7 +1131,7 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>244</width>
+                   <width>196</width>
                    <height>661</height>
                   </rect>
                  </property>

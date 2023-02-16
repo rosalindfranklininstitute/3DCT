@@ -438,7 +438,7 @@ def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProp
     else:
         rotation_init_deg = np.array(rotation_init_deg, dtype=np.float32)
         rotation_init_rad = rotation_init_deg * np.pi / 180
-        einit = Rigid3D.euler_to_ck(angles=rotation_init_deg, mode='x')
+        einit = Rigid3D.euler_to_ck(angles=rotation_init_rad, mode='x')
 
     restrict_rotations = 0.1
 

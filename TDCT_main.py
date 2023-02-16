@@ -89,6 +89,17 @@ __version__ = 'v3.0.0'
 if debug is True: print(clrmsg.DEBUG + "Execdir =", execdir)
 ########## GUI layout file #######################################################
 ##################################################################################
+
+''' The user interface is in the *.ui file
+To modify the User interface, make sure pyqt5-tools is installed
+and then run from the command line
+> qt5-tools designer
+
+and open the *.ui file
+
+Please note that interactivity must be coded here.
+'''
+
 qtCreatorFile_main = os.path.join(execdir, "TDCT_main.ui")
 Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile_main)
 

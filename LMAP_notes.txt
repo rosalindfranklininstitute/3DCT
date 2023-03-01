@@ -51,3 +51,12 @@ Result:
 [Errno 2] No such file or directory: 'C:\\Users\\Luis\\Desktop\\3DCT-RFI-git\\dist\\3DCorrelationToolbox-RFI\\reikna\\cluda\\kernel.mako'     
 
 TODO: Include the *.mako files in the spec or in the --add
+
+
+
+Packages needed to be installed (conda install -c conda-forge)
+napari
+redlionfish
+opencv
+qimage2ndarray
+

@@ -237,6 +237,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.toolButton_loadLayer2.clicked.connect(lambda: self.layerCtrl('layer2',load=True))
         self.toolButton_loadLayer3.clicked.connect(lambda: self.layerCtrl('layer3',load=True))
         self.commandLinkButton_correlate.clicked.connect(self.correlate)
+        self.btnImportFromCorrRes.clicked.connect(self.import_from_corr_results)
 
         ## Sliders
         self.horizontalSlider_brightness.valueChanged.connect(self.setBrightCont)
@@ -1778,6 +1779,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             ## Temporary img to draw results and save it
             img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
             imgSide = 'left'
+
+            #TODO: This footer cropping should be optional
             ## SEM/FIB imaging size is:	512x442, 1024x884, 2048x1768 or 4096x3536. Saved image file is
             #  SEM/FIB image + footer:	512x470, 1024x941, 2048x1883 or 4096x3767
             if img.shape[0] == 470:
@@ -2253,6 +2256,65 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                                                 ##################### END #####################
                                                 ######            Correlation           #######
                                                 ###############################################
+    
+    def import_from_corr_results(self):
+        file_in, filterdialog = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Import file as',
+            os.path.dirname(self.leftImagePath) )
+        
+        if file_in != "":
+            scene2D=None
+            scene3D=None
+            #Figure out which side is 3D and 2D
+            if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
+                scene2D = self.sceneLeft
+                scene3D = self.sceneRight
+            elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
+                scene2D = self.sceneRight
+                scene3D = self.sceneLeft
+            else:
+                QtWidgets.QMessageBox.critical(self, "Could not determine which side is 2D or 3D" )
+                return
+            
+            try:
+
+                #Read the table in the file
+                import numpy as np
+
+                data_from_txt = np.loadtxt(file_in,skiprows=21)
+
+                '''
+                importPoints() does it by reading CSV file
+                then adds circles to model
+
+                self.sceneLeft.addCircle(
+                            float(item[0]),
+                            float(item[1]),
+                            float(item[2]) if len(item) > 2 else 0)
+
+                and then uses a function itemsToModel() to fill table from circle locations
+                '''
+
+                for drow in data_from_txt: #Extracts row-by-row
+                    point3d = drow[0:3]
+                    point2d = drow[6:8]
+                
+                    scene3D.addCircle(
+                                float(point3d[0]),
+                                float(point3d[1]),
+                                float(point3d[2]) if len(point3d) > 2 else 0)
+                    
+                    scene2D.addCircle(
+                                float(point2d[0]),
+                                float(point2d[1]),
+                                float(point2d[2]) if len(point2d) > 2 else 0)
+                    
+                scene3D.itemsToModel()
+                scene2D.itemsToModel()
+
+            except:
+                print("Error when importing file.")
+
 
 
 class SplashScreen():

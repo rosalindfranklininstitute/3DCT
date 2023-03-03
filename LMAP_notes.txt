@@ -54,9 +54,13 @@ TODO: Include the *.mako files in the spec or in the --add
 
 
 
-Packages needed to be installed (conda install -c conda-forge)
-napari
+Packages needed to be installed (pip install)
+pyqt5 or pyqt ?
 redlionfish
-opencv
+opencv-python
 qimage2ndarray
-
+colorama
+matplotlib
+tifffile
+scikit-image
+psutil

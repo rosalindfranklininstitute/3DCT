@@ -489,7 +489,9 @@ class QGraphicsSceneCustom(QtWidgets.QGraphicsScene):
                 pointidx += 1
 
     def itemsToModel(self):
-        self._model.removeRows(0,self._model.rowCount())
+        rowcount = self._model.rowCount()
+        self._model.removeRows(0,rowcount)
+
         for item in list(self.items()):
             if isinstance(item, QtWidgets.QGraphicsEllipseItem):
                 x_item = QtGui.QStandardItem(str(item.x()))

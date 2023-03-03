@@ -179,20 +179,20 @@
           <item>
            <widget class="MatplotlibWidgetCustom" name="widget_matplotlib" native="true">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>1</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
-              <width>280</width>
+              <width>250</width>
               <height>150</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>270</width>
+              <width>16777215</width>
               <height>16777215</height>
              </size>
             </property>
@@ -1084,6 +1084,17 @@
                   </item>
                  </layout>
                 </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_37">
+                  <item>
+                   <widget class="QPushButton" name="btnImportFromCorrRes">
+                    <property name="text">
+                     <string>Import points from correlation results</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
                </layout>
               </item>
               <item>
@@ -1131,8 +1142,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>196</width>
-                   <height>661</height>
+                   <width>277</width>
+                   <height>647</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -1329,6 +1340,9 @@
                          </property>
                          <property name="minimum">
                           <number>1</number>
+                         </property>
+                         <property name="maximum">
+                          <number>1000</number>
                          </property>
                          <property name="value">
                           <number>3</number>
@@ -1759,6 +1773,9 @@
                      <property name="minimum">
                       <number>1</number>
                      </property>
+                     <property name="maximum">
+                      <number>10000</number>
+                     </property>
                      <property name="value">
                       <number>20</number>
                      </property>
@@ -1801,6 +1818,12 @@
                      <property name="suffix">
                       <string>°</string>
                      </property>
+                     <property name="minimum">
+                      <double>-360.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>360.000000000000000</double>
+                     </property>
                     </widget>
                    </item>
                    <item row="1" column="1">
@@ -1808,12 +1831,24 @@
                      <property name="suffix">
                       <string>°</string>
                      </property>
+                     <property name="minimum">
+                      <double>-360.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>360.000000000000000</double>
+                     </property>
                     </widget>
                    </item>
                    <item row="1" column="3">
                     <widget class="QDoubleSpinBox" name="corrInitParamThetaDoubleSpinBox">
                      <property name="suffix">
                       <string>°</string>
+                     </property>
+                     <property name="minimum">
+                      <double>-360.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>360.000000000000000</double>
                      </property>
                      <property name="value">
                       <double>79.000000000000000</double>
@@ -1838,6 +1873,12 @@
                     <widget class="QDoubleSpinBox" name="corrInitParamScaleDoubleSpinBox">
                      <property name="suffix">
                       <string/>
+                     </property>
+                     <property name="minimum">
+                      <double>0.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>100000.000000000000000</double>
                      </property>
                      <property name="value">
                       <double>3.860000000000000</double>

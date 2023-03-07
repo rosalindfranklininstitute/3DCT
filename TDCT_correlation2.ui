@@ -1141,7 +1141,7 @@
                  <property name="geometry">
                   <rect>
                    <x>0</x>
-                   <y>0</y>
+                   <y>-99</y>
                    <width>277</width>
                    <height>647</height>
                   </rect>
@@ -1777,7 +1777,7 @@
                       <number>10000</number>
                      </property>
                      <property name="value">
-                      <number>20</number>
+                      <number>50</number>
                      </property>
                     </widget>
                    </item>
@@ -1789,14 +1789,28 @@
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_22">
                 <item>
-                 <widget class="QCheckBox" name="correlGuessParametersChkBx">
-                  <property name="text">
-                   <string>Guess parameters</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
+                 <layout class="QHBoxLayout" name="horizontalLayout_43">
+                  <item>
+                   <widget class="QCheckBox" name="lockUnlockParamtersChkbx">
+                    <property name="toolTip">
+                     <string extracomment="Locks rotation and scale so that correlation will only optimize translation"/>
+                    </property>
+                    <property name="text">
+                     <string>🔓 parameters</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="correlGuessParametersChkBx">
+                    <property name="text">
+                     <string>Guess parameters</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                 <item>
                  <widget class="QWidget" name="widget_3" native="true">
@@ -1813,33 +1827,14 @@
                    </size>
                   </property>
                   <layout class="QGridLayout" name="gridLayout">
-                   <item row="2" column="1">
-                    <widget class="QDoubleSpinBox" name="corrInitParamPhiDoubleSpinBox">
-                     <property name="suffix">
-                      <string>°</string>
-                     </property>
-                     <property name="minimum">
-                      <double>-360.000000000000000</double>
-                     </property>
-                     <property name="maximum">
-                      <double>360.000000000000000</double>
+                   <item row="4" column="2">
+                    <widget class="QLabel" name="label_31">
+                     <property name="text">
+                      <string>scale:</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
-                    <widget class="QDoubleSpinBox" name="corrInitParamPsiDoubleSpinBox">
-                     <property name="suffix">
-                      <string>°</string>
-                     </property>
-                     <property name="minimum">
-                      <double>-360.000000000000000</double>
-                     </property>
-                     <property name="maximum">
-                      <double>360.000000000000000</double>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="3">
+                   <item row="3" column="3">
                     <widget class="QDoubleSpinBox" name="corrInitParamThetaDoubleSpinBox">
                      <property name="suffix">
                       <string>°</string>
@@ -1851,25 +1846,18 @@
                       <double>360.000000000000000</double>
                      </property>
                      <property name="value">
-                      <double>79.000000000000000</double>
+                      <double>65.000000000000000</double>
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="2">
-                    <widget class="QLabel" name="label_31">
-                     <property name="text">
-                      <string>scale:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="2">
+                   <item row="3" column="2">
                     <widget class="QLabel" name="label_33">
                      <property name="text">
                       <string>theta:</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="3">
+                   <item row="4" column="3">
                     <widget class="QDoubleSpinBox" name="corrInitParamScaleDoubleSpinBox">
                      <property name="suffix">
                       <string/>
@@ -1881,21 +1869,53 @@
                       <double>100000.000000000000000</double>
                      </property>
                      <property name="value">
-                      <double>3.860000000000000</double>
+                      <double>3.430000000000000</double>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="0">
+                   <item row="4" column="1">
+                    <widget class="QDoubleSpinBox" name="corrInitParamPsiDoubleSpinBox">
+                     <property name="suffix">
+                      <string>°</string>
+                     </property>
+                     <property name="minimum">
+                      <double>-360.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>360.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>-178.900000000000006</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
                     <widget class="QLabel" name="label_30">
                      <property name="text">
                       <string>psi:</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="0">
+                   <item row="3" column="0">
                     <widget class="QLabel" name="label_32">
                      <property name="text">
                       <string>phi:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QDoubleSpinBox" name="corrInitParamPhiDoubleSpinBox">
+                     <property name="suffix">
+                      <string>°</string>
+                     </property>
+                     <property name="minimum">
+                      <double>-360.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>360.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>-175.259999999999991</double>
                      </property>
                     </widget>
                    </item>
@@ -1954,6 +1974,13 @@
                </layout>
               </item>
               <item>
+               <widget class="Line" name="line_9">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QGroupBox" name="verticalGroupBox">
                 <property name="minimumSize">
                  <size>
@@ -1967,8 +1994,15 @@
                 <layout class="QVBoxLayout" name="verticalLayout_19">
                  <item>
                   <widget class="QLabel" name="label_2">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
                    <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Euler rotation angle&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>Euler rotation angles</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -2063,8 +2097,14 @@
                  </item>
                  <item>
                   <widget class="QLabel" name="label_7">
+                   <property name="font">
+                    <font>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
                    <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scale | Translation&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>Scale | Translation</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -2165,8 +2205,14 @@
                  </item>
                  <item>
                   <widget class="QLabel" name="label_8">
+                   <property name="font">
+                    <font>
+                     <weight>75</weight>
+                     <bold>true</bold>
+                    </font>
+                   </property>
                    <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Errors&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>Errors</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>

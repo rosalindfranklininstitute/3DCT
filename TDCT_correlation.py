@@ -91,6 +91,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         else:
             self.workingdir = workingdir
         self.lineEdit_workingDir.setText(self.workingdir)
+        self.lockUnlockParamtersUpdateTextState()
 
         ## Stylesheet colors:
         self.stylesheet_orange = "color: rgb(255, 120,   0);"
@@ -255,6 +256,9 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.tableView_results.customContextMenuRequested.connect(self.cmTableViewResults)
 
         self.lineEdit_workingDir.textChanged.connect(self.updateWorkingDir)
+
+        self.lockUnlockParamtersChkbx.stateChanged.connect(self.lockUnlockParamtersUpdateTextState)
+
 
         self.activateWindow()
 
@@ -2124,7 +2128,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             self.label_rms.setStyleSheet(self.stylesheet_green if transf.rmsError < 1 else self.stylesheet_orange)
 
             self.widget_matplotlib.setupScatterCanvas(width=4,height=4,dpi=52,toolbar=False)
-            self.widget_matplotlib.scatterPlot(x=delta2D[0,:],y=delta2D[1,:],frame=frame,framesize=framesize)
+            self.widget_matplotlib.add_scatterPlot(x=delta2D[0,:],y=delta2D[1,:],frame=frame,framesize=framesize)
 
             ## Populate tableView_results
             self.modelResults.removeRows(0,self.modelResults.rowCount())
@@ -2314,7 +2318,12 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
             except:
                 print("Error when importing file.")
-
+    
+    def lockUnlockParamtersUpdateTextState(self):
+        if self.lockUnlockParamtersChkbx.isChecked():
+            self.lockUnlockParamtersChkbx.setText("🔒 parameters")
+        else:
+            self.lockUnlockParamtersChkbx.setText("🔓 parameters")
 
 
 class SplashScreen():

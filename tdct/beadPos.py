@@ -340,11 +340,11 @@ def gaussfit(data,parent=None,hold=False):
             y.append(gauss(i,*popt))
         if hold is False:
             parent.widget_matplotlib.setupScatterCanvas(width=4,height=4,dpi=52,toolbar=False)
-        parent.widget_matplotlib.xyPlot(data[0], data[1], label='z data',clear=True)
-        #parent.widget_matplotlib.xyPlot(x, y, label='gaussian fit',clear=False)
+        parent.widget_matplotlib.add_xyPlot(data[0], data[1], label='z data',clear=True)
+        #parent.widget_matplotlib.add_xyPlot(x, y, label='gaussian fit',clear=False)
 
         #Try adding wiidth to plot label
-        parent.widget_matplotlib.xyPlot(x, y,
+        parent.widget_matplotlib.add_xyPlot(x, y,
             label=('gauss fit w=%.1f' % (popt[2])),
             clear=False )
 
@@ -562,20 +562,32 @@ def fit2Dgaussian(data2D, parent=None, hold=False):
 
     #get initial guess values
     #height, center_x, center_y, width_x, width_y, offset
-    height_guess = np.max(data2D)
-    center_x_guess = data2D.shape[1]/2
-    center_y_guess = data2D.shape[0]/2
-    width_x_guess = center_x_guess
-    width_y_guess = center_y_guess
+    # height_guess = np.max(data2D)
+    # center_x_guess = data2D.shape[1]/2
+    # center_y_guess = data2D.shape[0]/2
+    # width_x_guess = center_x_guess
+    # width_y_guess = center_y_guess
     offset_guess=0.0
+    try:
+        height_guess,center_x_guess,center_y_guess,width_x_guess,width_y_guess = moments(data2D)
+    except ValueError:
+        height_guess = np.max(data2D)
+        center_x_guess = data2D.shape[1]/2
+        center_y_guess = data2D.shape[0]/2
+        width_x_guess = center_x_guess
+        width_y_guess = center_y_guess
 
-    #curve_fit() only seems to work with flattened data
-    params_opt, params_cov = curve_fit(
-        gauss2D,
-        [Y_mg_flat, X_mg_flat],
-        data2D_flat,
-        p0=( height_guess, center_x_guess, center_y_guess, width_x_guess, width_y_guess, offset_guess)
-    )
+    try:
+        #curve_fit() only seems to work with flattened data
+        params_opt, params_cov = curve_fit(
+            gauss2D,
+            [Y_mg_flat, X_mg_flat],
+            data2D_flat,
+            p0=( height_guess, center_x_guess, center_y_guess, width_x_guess, width_y_guess, offset_guess)
+        )
+    except:
+        print("curve_fit() failed. returning None")
+        return None
 
     p=params_opt[:-1]
 

@@ -546,7 +546,7 @@ class MatplotlibWidgetCustom(QtWidgets.QWidget):
         QtWidgets.QWidget().setLayout(self.layout())
         self._setup = False
 
-    def scatterPlot(self,x='random',y='random',frame=False,framesize=None,xlabel="",ylabel=""):
+    def add_scatterPlot(self,x='random',y='random',frame=False,framesize=None,xlabel="",ylabel=""):
         if ((isinstance(x, str) and (x == 'random'))
                     or (isinstance(y, str) and (y == 'random'))):
             # the random data
@@ -616,7 +616,7 @@ class MatplotlibWidgetCustom(QtWidgets.QWidget):
         self.figure.tight_layout()
         self.canvas.draw()
 
-    def xyPlot(self,*args,**kwargs):
+    def add_xyPlot(self,*args,**kwargs):
         n = len(self.figure.axes)
         if n < 1:
             self.subplotXY = self.figure.add_subplot(n+1,1,1)
@@ -637,15 +637,31 @@ class MatplotlibWidgetCustom(QtWidgets.QWidget):
         # import tifffile as tf
         n = len(self.figure.axes)
 
-        #Adds a plot to an existing one
+        # #Adds a plot to an existing one
         if n < 2:
-            for i in range(n):
-                self.figure.axes[i].change_geometry(n + 1, 1, i + 1)
+        #     for i in range(n):
+        #         try:
+        #             self.figure.axes[i].change_geometry(n + 1, 1, i + 1)
+        #             # change_geometry(self, numrows, numcols, num)[source]
+        #             # Adds one more row and sets a single column
+        #             # #Deprecated since matplotlib 3.4 to SubplotSpec
+        #             # https://matplotlib.org/stable/api/prev_api_changes/api_changes_3.4.0.html
+        #         except:
+        #             print("Error when self.figure.axes[i].change_geometry()")
+
+        #             # # class matplotlib.gridspec.SubplotSpec(gridspec, num1, num2=None)
+        #             # #Check if it has grid spec
+        #             # ax= self.figure.axes[i]
+        #             # if hasattr(ax, "get_gridspec") and ax.get_gridspec() is not None:
+        #             #     gs = ax.get_gridspec()
+        #             #     ax.set_gri
+
             self.subplotMat = self.figure.add_subplot(n + 1, 1, n + 1)
             self.figure.tight_layout() #TODO: Sometimes it does not work
             self.figure.subplots_adjust(bottom=0)
-        # self.subplotMat.plot(np.arange(100),np.random.random(100)*10)
-        # mat = tf.imread('/Users/jan/Desktop/dot2.tif')
+
+        #self.figure.clear()
+        #self.subplotMat = self.figure.add_subplot(1, 1, 1)
         self.subplotMat.clear()
         self.subplotMat.matshow(mat)
         self.subplotMat.contour(contour, cmap='Greys', linewidths=(1,))

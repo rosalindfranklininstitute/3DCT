@@ -422,7 +422,7 @@ def main_withInitParams(markers_3d,markers_2d,spots_3d,rotation_center,psi0, phi
     return [transf, transf_3d, spots_2d, delta2D, cm_3D_markers, modified_translation]
 
 
-def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProps=None,*, rotation_init_deg=None, scale_init=None, ninit=10, random=True):
+def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProps=None,*, rotation_init_deg=None, scale_init=None, ninit=10, random=True, transl_only=False):
     '''
     Modified to include initial parameters.
     Calculates the best way to correlate 3D points to 2D points by using
@@ -463,11 +463,18 @@ def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProp
     # read ib markers
     mark_2d = markers_2d[list(range(markers_2d.shape[0]))][:,:2].transpose()
 
+    #TODO: Add option to fix rotation+scale parameters.
+    # Maybe is best to create a new function similar to find_32 that roations are fixed
+    # The way that find_32 is coded does not make easy to restrict rotation and scale.
+    # If values are provided it will use them as initial guesses for the correlation
+
+
     # establish correlation
     transf = Rigid3D.find_32(
         x=mark_3d, y=mark_2d, scale=scale,
         randome=random_rotations, einit=einit, einit_dist=restrict_rotations,
-        randoms=random_scale, sinit=scale_init, ninit=ninit)
+        randoms=random_scale, sinit=scale_init, ninit=ninit,
+        transl_only=transl_only)
 
     if imageProps:
         # establish correlation for cubic rotation (offset added to coordinates)
@@ -483,7 +490,8 @@ def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProp
         transf_cube = Rigid3D.find_32(
             x=mark_3d_cube, y=mark_2d, scale=scale,
             randome=random_rotations, einit=einit, einit_dist=restrict_rotations,
-            randoms=random_scale, sinit=scale_init, ninit=ninit)
+            randoms=random_scale, sinit=scale_init, ninit=ninit,
+            transl_only=transl_only)
     else:
         transf_cube = transf
 

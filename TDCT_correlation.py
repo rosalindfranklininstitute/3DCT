@@ -1954,7 +1954,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
                 rotation_init_deg=None
                 scale_init=None
-                if self.correlGuessParametersChkBx.isChecked():
+                if self.correlGuessParametersChkBx.isChecked() or self.lockUnlockParamtersChkbx.isChecked():
                     #extract guess parameters
                     psi0= self.corrInitParamPsiDoubleSpinBox.value()
                     phi0= self.corrInitParamPhiDoubleSpinBox.value()
@@ -1983,7 +1983,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                                                         rotation_init_deg=rotation_init_deg,
                                                         scale_init=scale_init,
                                                         ninit=ninit,
-                                                        random=random
+                                                        random=random,
+                                                        transl_only=self.lockUnlockParamtersChkbx.isChecked()
                                                         )
 
             else:

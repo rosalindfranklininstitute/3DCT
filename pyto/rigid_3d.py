@@ -145,7 +145,8 @@ class Rigid3D(Affine):
     def find_32(
             cls, x, y, scale=None, use_jac=True, mode='constr_ck',
             ninit=10, randome=False, einit=None, einit_dist=0.1, 
-            randoms=False, sinit=1., maxiter=1000, return_all=False):
+            randoms=False, sinit=1., maxiter=1000, return_all=False,
+            transl_only=False):
         """
         Finds optimal 3D transformation consisting of rotation, scale 
         (optional) and translation that transform initial point coordinates 
@@ -296,7 +297,8 @@ class Rigid3D(Affine):
                 x=x_prime, y=y_prime, cm=False, use_jac=use_jac, 
                 randome=randome, einit=einit_loc, einit_dist=einit_dist, 
                 scale=scale, randoms=randoms, sinit=sinit_loc, maxiter=maxiter,
-                ninit=ninit_loc, return_all=return_all)
+                ninit=ninit_loc, return_all=return_all,
+                transl_only=transl_only)
             if return_all:
                 rigid_cm, all_rigid_cm = res
             else:
@@ -309,12 +311,14 @@ class Rigid3D(Affine):
             res_1 = cls.find_32_constr_ck_multi(
                 x=x_prime, y=y_prime, cm=False, use_jac=use_jac, ninit=ninit_1,
                 randome=randome, einit=einit_loc[0], einit_dist=einit_dist, 
-                randoms=randoms, sinit=sinit_loc, maxiter=maxiter)
+                randoms=randoms, sinit=sinit_loc, maxiter=maxiter,
+                transl_only=transl_only)
             ninit_2 = max(ninit_loc - ninit_1, 1)
             res_2 = cls.find_32_constr_ck_multi(
                 x=x_prime, y=y_prime, cm=False, use_jac=use_jac, ninit=ninit_2,
                 randome=randome, einit=einit_loc[1], einit_dist=einit_dist, 
-                randoms=randoms, sinit=sinit_loc, maxiter=maxiter)
+                randoms=randoms, sinit=sinit_loc, maxiter=maxiter,
+                transl_only=transl_only)
 
             if return_all:
                 rigid_cm_1, all_rigid_cm_1 = res_1
@@ -349,7 +353,8 @@ class Rigid3D(Affine):
     def find_32_constr_ck_multi(
             cls, x, y, scale=None, cm=False, use_jac=True,
             ninit=10, randome=False, einit=None, einit_dist=0.1, 
-            randoms=False, sinit=1., maxiter=1000, return_all=False):
+            randoms=False, sinit=1., maxiter=1000, return_all=False,
+            transl_only=False):
         """
 
 
@@ -472,7 +477,8 @@ class Rigid3D(Affine):
             # solve and see if best solution so far
             rigid = cls.find_32_constr_ck(
                 x=x, y=y, scale=scale, init=one_init, use_jac=use_jac, 
-                maxiter=maxiter)
+                maxiter=maxiter,
+                transl_only=transl_only)
             all.append(rigid)
             try:
                 if rigid.optimizeResult.fun < best.optimizeResult.fun:
@@ -489,7 +495,7 @@ class Rigid3D(Affine):
     @classmethod
     def find_32_constr_ck(
             cls, x, y, scale=None, init=None, cm=False, use_jac=True, 
-            maxiter=1000):
+            maxiter=1000, transl_only=False):
         """
         Finds rigid transformation in 3D that transforms points x (initial) 
         into points y (final) when only the first two coordinates are given 
@@ -567,83 +573,111 @@ class Rigid3D(Affine):
         else:
             jac = None
 
-        # constraints: e**2 = 1, e <= 1, e >= -1, s > 0
-        if scale is None:
+        constr_ck_norm=None
+        if not transl_only:
+            # constraints: e**2 = 1, e <= 1, e >= -1, s > 0
+            if scale is None:
 
-            # e normalized to 1, scale > 0
-            constr_ck_norm = (
-                {'type' : 'eq',
-                 'fun' : lambda par: (par[:4]**2).sum() - 1,
-                 'jac' : lambda par: np.hstack((np.asarray(2 * par[:4]), [0]))},
-                {'type' : 'ineq',
-                'fun' : lambda par: np.array(1 - par[0]),
-                 'jac' : lambda par: np.array([-1,0,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[1]),
-                 'jac' : lambda par: np.array([0,-1,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[2]),
-                 'jac' : lambda par: np.array([0,0,-1,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[3]),
-                 'jac' : lambda par: np.array([0,0,0,-1,0])},
-                {'type' : 'ineq',
-                'fun' : lambda par: np.array(1 + par[0]),
-                 'jac' : lambda par: np.array([1,0,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[1]),
-                 'jac' : lambda par: np.array([0,1,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[2]),
-                 'jac' : lambda par: np.array([0,0,1,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[3]),
-                 'jac' : lambda par: np.array([0,0,0,1,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(par[4]),
-                 'jac' : lambda par: np.array([0,0,0,0,1])},
-                )
+                # e normalized to 1, scale > 0
+                constr_ck_norm = (
+                    {'type' : 'eq',
+                    'fun' : lambda par: (par[:4]**2).sum() - 1,
+                    'jac' : lambda par: np.hstack((np.asarray(2 * par[:4]), [0]))},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[0]),
+                    'jac' : lambda par: np.array([-1,0,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[1]),
+                    'jac' : lambda par: np.array([0,-1,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[2]),
+                    'jac' : lambda par: np.array([0,0,-1,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[3]),
+                    'jac' : lambda par: np.array([0,0,0,-1,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[0]),
+                    'jac' : lambda par: np.array([1,0,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[1]),
+                    'jac' : lambda par: np.array([0,1,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[2]),
+                    'jac' : lambda par: np.array([0,0,1,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[3]),
+                    'jac' : lambda par: np.array([0,0,0,1,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(par[4]),
+                    'jac' : lambda par: np.array([0,0,0,0,1])},
+                    )
 
+            else:
+
+                # e normalized to 1
+                constr_ck_norm = (
+                    {'type' : 'eq',
+                    'fun' : lambda par: (par**2).sum() - 1,
+                    'jac' : lambda par: np.asarray(2 * par)},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[0]),
+                    'jac' : lambda par: np.array([-1,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[1]),
+                    'jac' : lambda par: np.array([0,-1,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[2]),
+                    'jac' : lambda par: np.array([0,0,-1,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 - par[3]),
+                    'jac' : lambda par: np.array([0,0,0,-1])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[0]),
+                    'jac' : lambda par: np.array([1,0,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[1]),
+                    'jac' : lambda par: np.array([0,1,0,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[2]),
+                    'jac' : lambda par: np.array([0,0,1,0])},
+                    {'type' : 'ineq',
+                    'fun' : lambda par: np.array(1 + par[3]),
+                    'jac' : lambda par: np.array([0,0,0,1])}
+                    )
+
+            # init: [1, 0, 0, ...]
+            if init is None:
+                if scale is None:
+                    init = np.array([1.,0,0,0,1])
+                else:
+                    init = np.array([1.,0,0,0])
         else:
-
+            #translation only, lock scale and rotation
+            if init is None:
+                raise ValueError("Translation only mode requires initialization parameters")
+            
             # e normalized to 1
             constr_ck_norm = (
                 {'type' : 'eq',
-                 'fun' : lambda par: (par**2).sum() - 1,
-                 'jac' : lambda par: np.asarray(2 * par)},
-                {'type' : 'ineq',
-                'fun' : lambda par: np.array(1 - par[0]),
-                 'jac' : lambda par: np.array([-1,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[1]),
-                 'jac' : lambda par: np.array([0,-1,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[2]),
-                 'jac' : lambda par: np.array([0,0,-1,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 - par[3]),
-                 'jac' : lambda par: np.array([0,0,0,-1])},
-                {'type' : 'ineq',
-                'fun' : lambda par: np.array(1 + par[0]),
-                 'jac' : lambda par: np.array([1,0,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[1]),
-                 'jac' : lambda par: np.array([0,1,0,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[2]),
-                 'jac' : lambda par: np.array([0,0,1,0])},
-                {'type' : 'ineq',
-                 'fun' : lambda par: np.array(1 + par[3]),
-                 'jac' : lambda par: np.array([0,0,0,1])}
+                'fun' : lambda par: par[0]-init[0],
+                'jac' : lambda par: [1,0,0,0,0]},
+                {'type' : 'eq',
+                'fun' : lambda par: par[1]-init[1],
+                'jac' : lambda par: [0,1,0,0,0]},
+                {'type' : 'eq',
+                'fun' : lambda par: par[2]-init[2],
+                'jac' : lambda par: [0,0,1,0,0]},
+                {'type' : 'eq',
+                'fun' : lambda par: par[3]-init[3],
+                'jac' : lambda par: [0,0,0,1,0]},
+                {'type' : 'eq',
+                'fun' : lambda par: par[4]-init[4],
+                'jac' : lambda par: [0,0,0,0,1]},
                 )
-
-        # init: [1, 0, 0, ...]
-        if init is None:
-            if scale is None:
-                init = np.array([1.,0,0,0,1])
-            else:
-                init = np.array([1.,0,0,0])
-
+        
+        if constr_ck_norm is None:
+            return None
+        
         # solve
         res = sp.optimize.minimize(
             sq_diff_ck, init, jac=jac, constraints=constr_ck_norm,

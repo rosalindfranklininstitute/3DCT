@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1277</width>
-    <height>790</height>
+    <width>1269</width>
+    <height>761</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1141,9 +1141,9 @@
                  <property name="geometry">
                   <rect>
                    <x>0</x>
-                   <y>-99</y>
-                   <width>277</width>
-                   <height>647</height>
+                   <y>0</y>
+                   <width>196</width>
+                   <height>661</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -2015,30 +2015,6 @@
                     <number>0</number>
                    </property>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_10">
-                     <item>
-                      <widget class="QLabel" name="label_9">
-                       <property name="text">
-                        <string>psi:</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLabel" name="label_psi">
-                       <property name="styleSheet">
-                        <string notr="true">color: rgb(180, 180, 180);</string>
-                       </property>
-                       <property name="text">
-                        <string>n/a</string>
-                       </property>
-                       <property name="alignment">
-                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </item>
-                   <item>
                     <layout class="QHBoxLayout" name="horizontalLayout_11">
                      <item>
                       <widget class="QLabel" name="label_11">
@@ -2073,6 +2049,30 @@
                      </item>
                      <item>
                       <widget class="QLabel" name="label_theta">
+                       <property name="styleSheet">
+                        <string notr="true">color: rgb(180, 180, 180);</string>
+                       </property>
+                       <property name="text">
+                        <string>n/a</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_10">
+                     <item>
+                      <widget class="QLabel" name="label_9">
+                       <property name="text">
+                        <string>psi:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="label_psi">
                        <property name="styleSheet">
                         <string notr="true">color: rgb(180, 180, 180);</string>
                        </property>
@@ -2360,7 +2360,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1277</width>
+     <width>1269</width>
      <height>22</height>
     </rect>
    </property>
@@ -2578,22 +2578,6 @@
     <hint type="destinationlabel">
      <x>1381</x>
      <y>585</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>correlGuessParametersChkBx</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>widget_3</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1034</x>
-     <y>275</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1034</x>
-     <y>321</y>
     </hint>
    </hints>
   </connection>

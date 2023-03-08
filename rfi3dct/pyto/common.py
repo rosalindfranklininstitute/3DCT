@@ -21,9 +21,12 @@ import logging
 
 import numpy
 
-import pyto
-import pyto.attributes as attributes
-
+try:
+    import pyto
+    import pyto.attributes as attributes
+except:
+    from . import *
+    from ..pyto import attributes
 
 #################################################
 #

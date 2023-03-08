@@ -36,9 +36,20 @@ import tifffile as tf
 import qimage2ndarray
 ## Colored stdout, custom Qt functions (mostly to handle events), CSV handler
 ## and correlation algorithm
-from tdct import clrmsg, TDCT_debug, QtCustom, csvHandler, correlation
-from tools3dct.find_beads import find_beads_GUI
-from tools3dct.predict_FIB import predict_FIB_GUI
+try:
+    from tdct import clrmsg, TDCT_debug, QtCustom, csvHandler, correlation
+except:
+    from .tdct import clrmsg, TDCT_debug, QtCustom, csvHandler, correlation
+
+try:
+    from tools3dct.find_beads import find_beads_GUI
+except:
+    from .tools3dct.find_beads import find_beads_GUI
+
+try:
+    from tools3dct.predict_FIB import predict_FIB_GUI
+except:
+    from .tools3dct.predict_FIB import predict_FIB_GUI
 
 __version__ = 'v3.0.0'
 

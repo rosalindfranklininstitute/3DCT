@@ -1,0 +1,6 @@
+# Boiler-plate for compatibility
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
+from setuptools import setup
+
+setup()

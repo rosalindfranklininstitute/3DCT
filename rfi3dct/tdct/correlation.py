@@ -122,10 +122,16 @@ The procedure is organized as follows:
 import os
 import numpy as np
 
-import pyto
-import pyto.common as common
-import pyto.util
-from pyto.rigid_3d import Rigid3D
+try:
+    import pyto
+    import pyto.common as common
+    import pyto.util as util
+    from pyto.rigid_3d import Rigid3D
+except:
+    from .. import pyto
+    from ..pyto import common as common
+    from ..pyto import util
+    from ..pyto.rigid_3d import Rigid3D
 
 ########## Functions #############################################################
 ##################################################################################
@@ -194,7 +200,7 @@ def write_results(
                 ]
     out_format = '	%7.2f	%7.2f	%7.2f		%7.2f	%7.2f	%7.2f		%7.2f	%7.2f		%7.2f	%7.2f'
     ids = list(range(markers_3d.shape[1]))
-    res_tab_markers = pyto.util.arrayFormat(
+    res_tab_markers = util.arrayFormat(
         arrays=out_vars, format=out_format, indices=ids, prependIndex=False)
     table.extend(res_tab_markers)
 
@@ -212,7 +218,7 @@ def write_results(
                     ]
         out_format = '	%6.0f	%6.0f	%6.0f		%7.2f	%7.2f	%7.2f'
         ids = list(range(spots_3d.shape[1]))
-        res_tab_spots = pyto.util.arrayFormat(
+        res_tab_spots = util.arrayFormat(
             arrays=out_vars, format=out_format, indices=ids, prependIndex=False)
         table.extend(res_tab_spots)
 
@@ -234,7 +240,7 @@ def write_results(
                     ]
         out_format = '	%7.2f	%7.2f		%7.2f	%7.2f'
         ids = list(range(spots_2d.shape[1]))
-        res_tab_spots = pyto.util.arrayFormat(
+        res_tab_spots = util.arrayFormat(
             arrays=out_vars, format=out_format, indices=ids, prependIndex=False)
         table.extend(res_tab_spots)
 

@@ -36,7 +36,10 @@ from skimage.transform import hough_circle
 from scipy import signal
 import cv2
 
-from tools3dct import docs
+try:
+    from tools3dct import docs
+except:
+    from ..tools3dct import docs
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 

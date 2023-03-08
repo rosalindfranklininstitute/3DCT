@@ -37,8 +37,12 @@ import csv
 import argparse
 import sys, os
 
-from tools3dct.core import Param3D, QGraphicsSceneCustom, rotate, translate, scale
-from tools3dct import docs
+try:
+    from tools3dct.core import Param3D, QGraphicsSceneCustom, rotate, translate, scale
+    from tools3dct import docs
+except:
+    from ..tools3dct.core import Param3D, QGraphicsSceneCustom, rotate, translate, scale
+    from ..tools3dct import docs
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 

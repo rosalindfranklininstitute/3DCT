@@ -64,3 +64,5 @@ matplotlib
 tifffile
 scikit-image
 psutil
+
+Move all source code to folder /rfi-3dct so that it can be installed using setuptools

@@ -57,9 +57,17 @@ import webbrowser
 # GUI imports
 from subprocess import call
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from tdct import clrmsg, TDCT_debug, helpdoc, stackProcessing
-from tdct import deconvolution
-import TDCT_correlation
+
+try:
+    from tdct import clrmsg, TDCT_debug, helpdoc, stackProcessing, deconvolution
+except:
+    from .tdct import clrmsg, TDCT_debug, helpdoc, stackProcessing, deconvolution
+
+try:
+    import TDCT_correlation
+except:
+    from . import TDCT_correlation
+
 from tools3dct.project_fluo import fluo_project_GUI
 from tools3dct.create_mask import create_mask_GUI
 # add working directory temporarily to PYTHONPATH
@@ -766,10 +774,7 @@ class GenericThread(QtCore.QThread):
         return
 
 
-########## Executed when running in standalone ###################################
-##################################################################################
-
-if __name__ == "__main__":
+def main():
     if debug is True:
         print(clrmsg.DEBUG + 'Debug active')
         print(clrmsg.OK + 'Main imports OK')
@@ -781,3 +786,20 @@ if __name__ == "__main__":
     window.show()
     window.raise_()
     sys.exit(app.exec_())
+
+########## Executed when running in standalone ###################################
+##################################################################################
+
+if __name__ == "__main__":
+    main()
+    # if debug is True:
+    #     print(clrmsg.DEBUG + 'Debug active')
+    #     print(clrmsg.OK + 'Main imports OK')
+    #     print(clrmsg.INFO + 'This is 3D Correlation Toolbox', __version__)
+    #     print(clrmsg.WARNING + 'Debug mode can/will slow down parts of the Toolbox (e.g. marker clicking)')
+
+    # app = QtWidgets.QApplication(sys.argv)
+    # window = APP()
+    # window.show()
+    # window.raise_()
+    # sys.exit(app.exec_())

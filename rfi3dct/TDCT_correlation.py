@@ -1836,7 +1836,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         else:
             def corrMsgBox(self,msg):
-                print('message box')
+                #print('message box')
                 msgBox = QtWidgets.QMessageBox()
                 msgBox.setIcon(QtWidgets.QMessageBox.Question)
                 msgBox.setText(msg)
@@ -1929,7 +1929,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
         if imageProps is not None and None in imageProps: imageProps = None
 
-        if nrRowsModel2D >= 3:
+        if nrRowsModel2D >= 2:
             if nrRowsModel2D <= nrRowsModel3D:
                 timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -2002,7 +2002,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 QtWidgets.QMessageBox.critical(self, "Data Structure", "The two datasets do not contain the same amount of markers!")
                 return
         else:
-            QtWidgets.QMessageBox.critical(self, "Data Structure",'At least THREE markers are needed to do the correlation')
+            QtWidgets.QMessageBox.critical(self, "Data Structure",'At least TWO markers are needed to do the correlation')
             return
 
         transf_3d = self.correlation_results[1]
@@ -2330,6 +2330,29 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
             except:
                 print("Error when importing file.")
+        
+    def visualiseCorrelation(self):
+        # uses self.correlation_results
+        # and current images to plot in 3d in a seperate window
+
+        try:
+            import Correl_VisPy_Widget as cvw
+
+            #correl params must be in dictionary format
+            """
+            volume.transform.rotate(correl_params['phi'],(0,0,1)) # axis  (x,y,z)
+            volume.transform.rotate(correl_params['theta'],axis=(1,0,0))
+            volume.transform.rotate(correl_params['psi'],(0,0,1))#
+            scale0 = correl_params['scale']
+            volume.transform.scale((scale0,scale0,scale0))
+            volume.transform.translate(correl_params['transl'])
+            """
+
+            w0 = cvw.showCorrelation(data_3d, data_2d, correl_params)
+
+        
+        except:
+            
     
     def lockUnlockParamtersUpdateTextState(self):
         if self.lockUnlockParamtersChkbx.isChecked():

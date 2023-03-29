@@ -13,8 +13,10 @@ import vispy.scene
 #from vispy import app, scene
 from  vispy.visuals.transforms.linear import MatrixTransform
 from vispy.util.quaternion import Quaternion
+from vispy.util import keys
 
 from superqt import QDoubleRangeSlider
+import math
 
 # QSplitter does not seem to be working
 
@@ -23,7 +25,7 @@ class Ui_MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("3D Correlation Viewer")
-        self.resize(800, 600)
+        self.resize(800, 500)
 
         #OK
         # centralWidget= QWidget(self)
@@ -58,7 +60,7 @@ class Ui_MainWindow(QMainWindow):
         canvas = vispy.scene.SceneCanvas(keys='interactive', show=True)
         canvasl_Lt.addWidget(canvas.native)
         
-        self.view, self.volume, self.image = self.setupVispyCorrelCanvas(canvas, data_3d, data_2d, corr_params)
+        self.setupVispyCorrelCanvas(canvas, data_3d, data_2d, corr_params)
         self.resetCamera()
 
         # self.volume.clim
@@ -88,7 +90,7 @@ class Ui_MainWindow(QMainWindow):
         splitter.addWidget(frameleft)
         splitter.addWidget(frameright)
 
-        splitter.setSizes((80,20))
+        splitter.setSizes((90,10))
         windowlayout.addWidget(splitter)
 
         self.setCentralWidget(centralWidget)
@@ -99,15 +101,18 @@ class Ui_MainWindow(QMainWindow):
         self.sliderVol.valueChanged.connect(self.sliderVolChanged)
         self.sliderIm.valueChanged.connect(self.sliderImChanged)
 
+        canvas.events.mouse_move.connect(self.on_mouse_move)
+        canvas.events.key_press.connect(self.on_key_press)
+
     def setupVispyCorrelCanvas(self, canvas, data_3d, data_2d, correl_params):      
         #Add content
-        view = canvas.central_widget.add_view()
+        self.view = canvas.central_widget.add_view()
 
         #Image as grayscale
         # Create the visual for plane rendering
-        image=vispy.scene.visuals.Image(
+        self.image=vispy.scene.visuals.Image(
             data = data_2d,
-            parent=view.scene,
+            parent=self.view.scene,
             cmap='grays'
         )
 
@@ -115,23 +120,30 @@ class Ui_MainWindow(QMainWindow):
         import vispy.color.colormap as cm
         mygreen_cm = cm.Colormap([(0.0, 0.0, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0) ],controls=None, interpolation='linear')
 
-        volume = vispy.scene.visuals.Volume( data_3d,
-            parent=view.scene,
+        self.volume = vispy.scene.visuals.Volume( data_3d,
+            parent=self.view.scene,
             raycasting_mode='volume',
             method='mip',
             cmap=mygreen_cm
         )
-        volume.opacity=1.0
-        volume.set_gl_state('additive')
+        self.volume.opacity=1.0
+        self.volume.set_gl_state('additive')
 
-        #Rotate for to the correlation parameters
-        volume.transform= MatrixTransform()
-        volume.transform.rotate(correl_params['phi'],(0,0,1)) # axis  (x,y,z)
-        volume.transform.rotate(correl_params['theta'],axis=(1,0,0))
-        volume.transform.rotate(correl_params['psi'],(0,0,1))#
-        scale0 = correl_params['scale']
-        volume.transform.scale((scale0,scale0,scale0))
-        volume.transform.translate(correl_params['transl'])
+        #Initial rotation based in provided correlation values
+        phi, theta, psi = correl_params['phi'], correl_params['theta'], correl_params['psi']
+        #Does not store internally the angles, but the rotation matrix itself
+        self.volRotationTransf = self.getRotMatrixTransformFromEuler(phi, theta, psi)
+
+        self.scale = correl_params['scale']
+        self.translate = correl_params['transl']
+
+        #Set the all of tranformations 
+        # rotation as defined above, scale and translation)
+        self.setVolumeTransform()
+
+
+        # volume.transform.scale((scale0,scale0,scale0))
+        # volume.transform.translate()
 
         # Create a camera
         # cam = vispy.scene.cameras.ArcballCamera(
@@ -145,7 +157,20 @@ class Ui_MainWindow(QMainWindow):
 
         # view.camera = cam
 
-        return view, volume, image
+    def getRotMatrixTransformFromEuler(self,phi,theta,psi):
+        tr = MatrixTransform()
+        tr.rotate(phi,(0,0,1)) # axis  (x,y,z)
+        tr.rotate(theta,axis=(1,0,0))
+        tr.rotate(psi,(0,0,1))
+        return tr
+
+    def setVolumeTransform(self):
+        #Uses self.VolRotation to apply rotation
+        self.volume.transform =  self.volRotationTransf
+
+        self.volume.transform.scale((self.scale,self.scale,self.scale))
+        self.volume.transform.translate(self.translate)
+
 
     def resetSliders(self):
         #Sets to the current limits (clim) which is assumed to be max min of data
@@ -183,6 +208,48 @@ class Ui_MainWindow(QMainWindow):
     def sliderImChanged(self, newvals):
         #Sets new values
         self.image.clim=list(newvals)
+    
+    def on_key_press(self,event):
+        d=1
+        #print(type(event.key))
+
+        if keys.SHIFT in event.modifiers:
+            d*=5
+        if keys.CONTROL in event.modifiers:
+            d/=5
+        
+        #Translation
+        if event.key.name=='W':
+            self.volume.transform.translate((0,-d,0))
+        elif event.key.name=='S':
+            self.volume.transform.translate((0,d,0))
+        elif event.key.name=='A':
+            self.volume.transform.translate((-d,0,0))
+        elif event.key.name=='D':
+            self.volume.transform.translate((d,0,0))
+        #Scaling
+        elif event.key.name=='Q':
+            sc = (100-d)/100
+            self.volume.transform.scale((sc,sc,sc))
+        elif event.key.name=='E':
+            sc = (100+d)/100
+            self.volume.transform.scale((sc,sc,sc))
+
+    def on_mouse_move(self,event):
+        #print(f"Mouse moved, event buttons:{event.buttons} , modifiers:{event.modifiers}")
+        if event.button==1 and event.is_dragging and len(event.modifiers)>0:
+            #print(type(event.modifiers[0]))
+            if keys.CONTROL in event.modifiers:
+                dxy = event.pos - event.last_event.pos
+                x,y = dxy/2
+
+                v0 = math.sqrt(x*x+y*y)
+                if v0>0:
+                    rot_vector = (-y,x,0)
+                    #Apply this dxy to rotation
+                    # rotate around a perpendicular of displacement
+                    self.volRotationTransf.rotate(v0,rot_vector)
+
 
 #Class instead of being a function because as soon as a function ends, it destroys the object created
 class showCorrelation():
@@ -199,7 +266,7 @@ if __name__ == "__main__":
 
     correl_params={
         'phi':0,
-        'theta':45,
+        'theta':-45,
         'psi':0,
         'scale':1.0,
         'transl':[0,0,0]

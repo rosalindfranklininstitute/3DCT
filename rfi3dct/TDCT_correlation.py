@@ -1964,9 +1964,11 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
                 #                                             imageProps=imageProps
                 #                                             )
-
+                
                 rotation_init_deg=None
                 scale_init=None
+
+                # Use initial (guess) parameters for the optimizer?
                 if self.correlGuessParametersChkBx.isChecked() or self.lockUnlockParamtersChkbx.isChecked():
                     #extract guess parameters
                     psi0= self.corrInitParamPsiDoubleSpinBox.value()
@@ -1978,6 +1980,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                     scale_init= scale0
 
                 ninit=1
+                # Random rotations?
                 random=False
                 if self.correlInitialParamRandomChkBx.isChecked():
                     random=True
@@ -2105,39 +2108,20 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         if hasattr(self, "correlation_results"):
             ## get data
             transf = self.correlation_results[0]
-            # transf_3d = self.correlation_results[1]			## unused atm
-            # calc_spots_2d = self.correlation_results[2]		## unused atm
+            self.populateTransformInfo(transf)
+
             delta2D = self.correlation_results[3]
             delta2D_mean = np.absolute(delta2D).mean(axis=1)
-            # cm_3D_markers = self.correlation_results[4]		## unused atm
-            translation = (transf.d[0], transf.d[1], transf.d[2])
-            translation_customRotation = self.correlation_results[5]
-            eulers = transf.extract_euler(r=transf.q, mode='x', ret='one')
-            eulers = eulers * 180 / np.pi
-            scale = transf.s_scalar
-
             # ## display data
-            self.label_phi.setText('{0:.3f}'.format(eulers[0]))
-            self.label_phi.setStyleSheet(self.stylesheet_green)
-            self.label_psi.setText('{0:.3f}'.format(eulers[2]))
-            self.label_psi.setStyleSheet(self.stylesheet_green)
-            self.label_theta.setText('{0:.3f}'.format(eulers[1]))
-            self.label_theta.setStyleSheet(self.stylesheet_green)
-            self.label_scale.setText('{0:.3f}'.format(scale))
-            self.label_scale.setStyleSheet(self.stylesheet_green)
-            self.label_translation.setText('x = {0:.3f} | y = {1:.3f}'.format(translation[0], translation[1]))
-            self.label_translation.setStyleSheet(self.stylesheet_green)
-            self.label_custom_rot_center.setText('[{0},{1},{2}]:'.format(
-                                int(self.doubleSpinBox_custom_rot_center_x.value()),
-                                int(self.doubleSpinBox_custom_rot_center_y.value()),
-                                int(self.doubleSpinBox_custom_rot_center_z.value())))
-            self.label_translation_custom_rot.setText('x = {0:.3f} | y = {1:.3f}'.format(
-                translation_customRotation[0], translation_customRotation[1]))
-            self.label_translation_custom_rot.setStyleSheet(self.stylesheet_green)
+    
             self.label_meandxdy.setText('{0:.5f} / {1:.5f}'.format(delta2D_mean[0], delta2D_mean[1]))
-            if delta2D_mean[0] <= 1 and delta2D_mean[1] <= 1: self.label_meandxdy.setStyleSheet(self.stylesheet_green)
-            elif delta2D_mean[0] < 2 or delta2D_mean[1] < 2: self.label_meandxdy.setStyleSheet(self.stylesheet_orange)
-            else: self.label_meandxdy.setStyleSheet(self.stylesheet_red)
+
+            if delta2D_mean[0] <= 1 and delta2D_mean[1] <= 1:
+                self.label_meandxdy.setStyleSheet(self.stylesheet_green)
+            elif delta2D_mean[0] < 2 or delta2D_mean[1] < 2:
+                self.label_meandxdy.setStyleSheet(self.stylesheet_orange)
+            else:
+                self.label_meandxdy.setStyleSheet(self.stylesheet_red)
             self.label_rms.setText('{0:.5f}'.format(transf.rmsError))
             self.label_rms.setStyleSheet(self.stylesheet_green if transf.rmsError < 1 else self.stylesheet_orange)
 
@@ -2164,6 +2148,42 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         else:
             # QtWidgets.QMessageBox.critical(self, "Error", "No data to display!")
             pass
+    
+    def populateTransformInfo(self,transf):
+        """
+        Uses information from parameter transf to populate UI elements
+        about the transformation
+
+        transf is assumed to be a Rigid3D object from rigid_3d.py
+
+        """
+        # transf_3d = self.correlation_results[1]			## unused atm
+        # calc_spots_2d = self.correlation_results[2]		## unused atm
+
+        # cm_3D_markers = self.correlation_results[4]		## unused atm
+        translation = (transf.d[0], transf.d[1], transf.d[2])
+        #translation_customRotation = self.correlation_results[5]
+        eulers = transf.extract_euler(r=transf.q, mode='x', ret='one')
+        eulers = eulers * 180 / np.pi
+        scale = transf.s_scalar
+
+        self.label_phi.setText('{0:.3f}'.format(eulers[0]))
+        self.label_phi.setStyleSheet(self.stylesheet_green)
+        self.label_psi.setText('{0:.3f}'.format(eulers[2]))
+        self.label_psi.setStyleSheet(self.stylesheet_green)
+        self.label_theta.setText('{0:.3f}'.format(eulers[1]))
+        self.label_theta.setStyleSheet(self.stylesheet_green)
+        self.label_scale.setText('{0:.3f}'.format(scale))
+        self.label_scale.setStyleSheet(self.stylesheet_green)
+        self.label_translation.setText('x = {0:.3f} | y = {1:.3f}'.format(translation[0], translation[1]))
+        self.label_translation.setStyleSheet(self.stylesheet_green)
+        # self.label_custom_rot_center.setText('[{0},{1},{2}]:'.format(
+        #     int(self.doubleSpinBox_custom_rot_center_x.value()),
+        #     int(self.doubleSpinBox_custom_rot_center_y.value()),
+        #     int(self.doubleSpinBox_custom_rot_center_z.value())))
+        # self.label_translation_custom_rot.setText('x = {0:.3f} | y = {1:.3f}'.format(
+        # translation_customRotation[0], translation_customRotation[1]))
+        #self.label_translation_custom_rot.setStyleSheet(self.stylesheet_green)
 
     def showSelectedResidual(self,doubleclick=False):
         """Show position of selected residual (results tab)

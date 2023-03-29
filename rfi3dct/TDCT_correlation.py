@@ -269,7 +269,8 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.lineEdit_workingDir.textChanged.connect(self.updateWorkingDir)
 
         self.lockUnlockParamtersChkbx.stateChanged.connect(self.lockUnlockParamtersUpdateTextState)
-
+        
+        self.btnViewCorrelation.clicked.connect(self.visualiseCorrelation)
 
         self.activateWindow()
 
@@ -1835,6 +1836,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 ## Need RGB for colored markers
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         else:
+            #Neither left, right (2D,3D) or (3D,2D)
             def corrMsgBox(self,msg):
                 #print('message box')
                 msgBox = QtWidgets.QMessageBox()
@@ -2348,10 +2350,46 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             volume.transform.translate(correl_params['transl'])
             """
 
-            w0 = cvw.showCorrelation(data_3d, data_2d, correl_params)
+            #Check if 2D,3D or 3D,2D
+            #imagetype is in binary
+            # bit 1 = 2D
+            # bit 2 = 3D
+            # ... 
+            data3D = None
+            data2D = None
+            if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
+                data2D = self.img_left_layer1
+                data3D = self.imgstack_right_layer1
+            elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
+                data2D = self.img_right_layer1
+                data3D = self.imgstack_left_layer1
+            else:
+                print("Not valid 2D and 3D combination")
+                return
+            
+
+            transf_3d = self.correlation_results[0]
+
+            # extract eulers in degrees
+            eulers = transf_3d.extract_euler(r=transf_3d.q, mode='x', ret='one')
+            eulers = eulers * 180 / np.pi
+            
+            correl_params={
+                'phi':eulers[0],
+                'theta':eulers[1],
+                'psi':eulers[2],
+                'scale':transf_3d.s_scalar,
+                'transl':transf_3d.d
+            }
+
+            if hasattr(self, 'correlVis'):
+                self.correlVis=None #Close current visualisation
+            #Launch the visualisation
+            self.correlVis = cvw.showCorrelation(data3D, data2D, correl_params)
 
         
         except:
+            print("Failed to open Vispy correlation visualiser")
             
     
     def lockUnlockParamtersUpdateTextState(self):
@@ -2360,6 +2398,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         else:
             self.lockUnlockParamtersChkbx.setText("🔓 parameters")
 
+    
 
 class SplashScreen():
     def __init__(self):

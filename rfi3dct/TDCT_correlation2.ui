@@ -219,7 +219,7 @@
              <enum>QTabWidget::Rounded</enum>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="ctrlTab">
              <property name="minimumSize">
@@ -1142,8 +1142,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>196</width>
-                   <height>661</height>
+                   <width>277</width>
+                   <height>647</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -2271,6 +2271,39 @@
                  </item>
                 </layout>
                </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="tab">
+             <attribute name="title">
+              <string>Page</string>
+             </attribute>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_21">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>60</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Note: Leave-one-out uses optimization paramters defined in Correlation tab&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnLeaveOneOut">
+                <property name="text">
+                 <string>Run Leave-one-out</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QWidget" name="wdgtPlotLEaveOneOut" native="true"/>
               </item>
              </layout>
             </widget>

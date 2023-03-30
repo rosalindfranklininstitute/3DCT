@@ -271,7 +271,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         self.lockUnlockParamtersChkbx.stateChanged.connect(self.lockUnlockParamtersUpdateTextState)
         
         self.btnViewCorrelation.clicked.connect(self.visualiseCorrelation)
-
+        self.btnLeaveOneOut.clicked.connect(self.runLeaveOneOut)
         self.activateWindow()
 
     def keyPressEvent(self,event):
@@ -1789,226 +1789,30 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         return np.array(listarray).astype(float)
 
     def correlate(self):
-        if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
-            model2D = self.model_Left
-            model3D = self.model_Right
-            ## Temporary img to draw results and save it
-            img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
-            imgSide = 'left'
 
-            #TODO: This footer cropping should be optional
-            ## SEM/FIB imaging size is:	512x442, 1024x884, 2048x1768 or 4096x3536. Saved image file is
-            #  SEM/FIB image + footer:	512x470, 1024x941, 2048x1883 or 4096x3767
-            if img.shape[0] == 470:
-                imgShape = [442,img.shape[1]]
-            elif img.shape[0] == 941:
-                imgShape = [884,img.shape[1]]
-            elif img.shape[0] == 1883:
-                imgShape = [1768,img.shape[1]]
-            elif img.shape[0] == 3767:
-                imgShape = [3536,img.shape[1]]
-            else:
-                imgShape = img.shape
-            imageProps = [imgShape,self.sceneLeft.pixelSize,self.imgstack_right_layer1.shape]
-            if img.ndim == 2:
-                ## Need RGB for colored markers
-                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-        elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
-            model2D = self.model_Right
-            model3D = self.model_Left
-            ## Temporary img to draw results and save it
-            img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
-            imgSide = 'right'
-            ## SEM/FIB imaging size is:	512x442, 1024x884, 2048x1768 or 4096x3536. Saved image file is
-            #  SEM/FIB image + footer:	512x470, 1024x941, 2048x1883 or 4096x3767
-            if img.shape[0] == 470:
-                imgShape = [442,img.shape[1]]
-            elif img.shape[0] == 941:
-                imgShape = [884,img.shape[1]]
-            elif img.shape[0] == 1883:
-                imgShape = [1768,img.shape[1]]
-            elif img.shape[0] == 3767:
-                imgShape = [3536,img.shape[1]]
-            else:
-                imgShape = img.shape
-            imageProps = [imgShape,self.sceneRight.pixelSize,self.imgstack_left_layer1.shape]
-            if img.ndim == 2:
-                ## Need RGB for colored markers
-                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+        preCorrelParams = self.getPreCorrelationParameters()
+    
+        if preCorrelParams['bCanCalculate']:
+            
+            #Use random initial rotations and parameters to optimize correlation
+            self.correlation_results = correlation.main2(
+                markers_3d=preCorrelParams['markers_3d'],
+                markers_2d=preCorrelParams['markers_2d'],
+                spots_3d=preCorrelParams['spots_3d'],
+                rotation_center=preCorrelParams['rotation_center'],
+                results_file=preCorrelParams['results_file'],
+                imageProps=preCorrelParams['imageProps'],
+                rotation_init_deg=preCorrelParams['rotation_init_deg'],
+                scale_init=preCorrelParams['scale_init'],
+                ninit=preCorrelParams['ninit'],
+                random=preCorrelParams['random'],
+                transl_only=preCorrelParams['transl_only']
+                )
         else:
-            #Neither left, right (2D,3D) or (3D,2D)
-            def corrMsgBox(self,msg):
-                #print('message box')
-                msgBox = QtWidgets.QMessageBox()
-                msgBox.setIcon(QtWidgets.QMessageBox.Question)
-                msgBox.setText(msg)
-                l2rButton = msgBox.addButton("Left to Right", QtWidgets.QMessageBox.ActionRole)
-                r2lButton = msgBox.addButton("Right to Left", QtWidgets.QMessageBox.ActionRole)
-                abortButton = msgBox.addButton(QtWidgets.QMessageBox.Cancel)
-                msgBox.exec_()
-                if msgBox.clickedButton() == l2rButton:
-                    return "l2r"
-                elif msgBox.clickedButton() == r2lButton:
-                    return "r2l"
-                elif msgBox.clickedButton() == abortButton:
-                    return None
-
-            if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
-                rowsLeft = self.model_Left.rowCount()
-                rowsRight = self.model_Right.rowCount()
-                if rowsLeft > rowsRight:
-                    corrMsgBoxRetVal = 'l2r'
-                elif rowsLeft < rowsRight:
-                    corrMsgBoxRetVal = 'r2l'
-                else:
-                    corrMsgBoxRetVal = corrMsgBox(
-                        self,"It seems you want to do a 3D to 3D correlation. " +
-                        "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
-                if corrMsgBoxRetVal == 'l2r':
-                    model2D = self.model_Right
-                    model3D = self.model_Left
-                    ## Temporary img to draw results and save it
-                    img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
-                    imgSide = 'right'
-                elif corrMsgBoxRetVal == 'r2l':
-                    model2D = self.model_Left
-                    model3D = self.model_Right
-                    ## Temporary img to draw results and save it
-                    img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
-                    imgSide = 'left'
-                else:
-                    return
-                if img.ndim == 2:
-                    ## Need RGB for colored markers
-                    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-                imageProps = None
-                # QtWidgets.QMessageBox.critical(self, "Data Structure",'Both datasets contain only 3D information. I need one 3D and one 2D dataset')
-                # raise ValueError('Both datasets contain only 3D information. I need one 3D and one 2D dataset')
-            elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
-                rowsLeft = self.model_Left.rowCount()
-                rowsRight = self.model_Right.rowCount()
-                if rowsLeft > rowsRight:
-                    corrMsgBoxRetVal = 'l2r'
-                elif rowsLeft < rowsRight:
-                    corrMsgBoxRetVal = 'r2l'
-                else:
-                    corrMsgBoxRetVal = corrMsgBox(
-                            self,"It seems you want to do a 2D to 2D correlation. " +
-                            "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
-                if corrMsgBoxRetVal == 'l2r':
-                    model2D = self.model_Right
-                    model3D = self.model_Left
-                    ## Temporary img to draw results and save it
-                    img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
-                    imgSide = 'right'
-                elif corrMsgBoxRetVal == 'r2l':
-                    model2D = self.model_Left
-                    model3D = self.model_Right
-                    ## Temporary img to draw results and save it
-                    img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
-                    imgSide = 'left'
-                else:
-                    return
-                if img.ndim == 2:
-                    ## Need RGB for colored markers
-                    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-                imageProps = None
-                # QtWidgets.QMessageBox.critical(self, "Data Structure",'Both datasets contain only 2D information. I need one 3D and one 2D dataset')
-                # raise ValueError('Both datasets contain only 2D information. I need one 3D and one 2D dataset')
-            else:
-                QtWidgets.QMessageBox.critical(self, "Data Structure",'Cannot determine if datasets are 2D or 3D')
-                raise ValueError('Cannot determine if datasets are 2D or 3D')
-        ## variables for dataset validation. The amount of markers from the 2D and 3D model have to be in corresponding order.
-        ## All extra rows in the 3D model are used as POIs.
-        nrRowsModel2D = model2D.rowCount()
-        nrRowsModel3D = model3D.rowCount()
-        # self.rotation_center = [self.doubleSpinBox_psi.value(),self.doubleSpinBox_phi.value(),self.doubleSpinBox_theta.value()]
-        # self.rotation_center = [670, 670, 670]
-        self.rotation_center = [
-                                self.doubleSpinBox_custom_rot_center_x.value(),
-                                self.doubleSpinBox_custom_rot_center_y.value(),
-                                self.doubleSpinBox_custom_rot_center_z.value()]
-
-        if imageProps is not None and None in imageProps: imageProps = None
-
-        if nrRowsModel2D >= 2:
-            if nrRowsModel2D <= nrRowsModel3D:
-                timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-
-
-                # if self.correlInitialParamRandomChkBx.isChecked():
-                #     #Use random initial rotations and parameters to optimize correlation
-                #     self.correlation_results = correlation.main(
-                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
-                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
-                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
-                #                                             rotation_center=self.rotation_center,
-                #                                             results_file=''.join([
-                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
-                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
-                #                                             imageProps=imageProps
-                #                                             )
-                # else:
-                #     #Use specified initial parameters
-                #     self.correlation_results = correlation.main_withInitParams(
-                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
-                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
-                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
-                #                                             rotation_center=self.rotation_center,
-                #                                             psi0= self.corrInitParamPsiDoubleSpinBox.value(),
-                #                                             phi0= self.corrInitParamPhiDoubleSpinBox.value(),
-                #                                             theta0= self.corrInitParamThetaDoubleSpinBox.value(),
-                #                                             scale0= self.corrInitParamScaleDoubleSpinBox.value(),
-                #                                             results_file=''.join([
-                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
-                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
-                #                                             imageProps=imageProps
-                #                                             )
-                
-                rotation_init_deg=None
-                scale_init=None
-
-                # Use initial (guess) parameters for the optimizer?
-                if self.correlGuessParametersChkBx.isChecked() or self.lockUnlockParamtersChkbx.isChecked():
-                    #extract guess parameters
-                    psi0= self.corrInitParamPsiDoubleSpinBox.value()
-                    phi0= self.corrInitParamPhiDoubleSpinBox.value()
-                    theta0= self.corrInitParamThetaDoubleSpinBox.value()
-                    scale0= self.corrInitParamScaleDoubleSpinBox.value()
-
-                    rotation_init_deg=np.array([phi0, theta0, psi0], dtype=np.float32)
-                    scale_init= scale0
-
-                ninit=1
-                # Random rotations?
-                random=False
-                if self.correlInitialParamRandomChkBx.isChecked():
-                    random=True
-                    ninit= self.corrInitParamNRandomsSpinBox.value()
-                
-                #Use random initial rotations and parameters to optimize correlation
-                self.correlation_results = correlation.main2(
-                                                        markers_3d=self.model_to_np(model3D,[0,nrRowsModel2D]),
-                                                        markers_2d=self.model_to_np(model2D,[0,nrRowsModel2D]),
-                                                        spots_3d=self.model_to_np(model3D,[nrRowsModel2D,nrRowsModel3D]),
-                                                        rotation_center=self.rotation_center,
-                                                        results_file=''.join([
-                                                            self.workingdir,'/',timestamp, '_correlation.txt'
-                                                            ] if self.checkBox_writeReport.isChecked() else ''),
-                                                        imageProps=imageProps,
-                                                        rotation_init_deg=rotation_init_deg,
-                                                        scale_init=scale_init,
-                                                        ninit=ninit,
-                                                        random=random,
-                                                        transl_only=self.lockUnlockParamtersChkbx.isChecked()
-                                                        )
-
-            else:
-                QtWidgets.QMessageBox.critical(self, "Data Structure", "The two datasets do not contain the same amount of markers!")
-                return
-        else:
-            QtWidgets.QMessageBox.critical(self, "Data Structure",'At least TWO markers are needed to do the correlation')
+            #Cannot calculate
             return
+
+
 
         transf_3d = self.correlation_results[1]
         alpha = self.doubleSpinBox_markerAlpha.value()
@@ -2350,6 +2154,95 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 scene3D.itemsToModel()
                 scene2D.itemsToModel()
 
+                #Recreate the self.correlation_results object from the info in the file
+
+                #Try to read paramaters
+                with open(file_in, 'r') as f:
+                    lines = f.read().split('\n')
+
+                if len(lines)>0:
+                    def convert1DArrayAsStringToNumpy(s):
+                        return np.fromstring( s.strip('[] '),sep=',')
+
+                    phi=0
+                    psi=0
+                    theta0=0
+                    scale0=0
+
+                    transl0=[]
+                    error0=0
+
+                    params_to_read = ["rotation", "scale", "translation for rotation around [0,0,0]"]
+                    for line in lines:
+                        if "rotation (Euler phi, psi, theta):" in line:
+                            l0 = line.split(':')[1]
+                            #print(f"l0:{l0}")
+                            values = convert1DArrayAsStringToNumpy(l0)
+                            #print(f"values:{values}")
+                            #values0  = convert1DArrayAsStringToNumpy(' [-0.078,  0.221, 78.757]')
+                            #print(f"values1:{values0}")
+                            phi0, psi0, theta0 = values
+                        if "- scale" in line:
+                            l0 = line.split('=')[1]
+                            scale0 = float(l0)
+                        if "translation for rotation around [0,0,0]" in line:
+                            #print("translation data:", line)
+                            l0 = line.split('=')[1]
+                            values = convert1DArrayAsStringToNumpy(l0)
+                            transl0 = values
+                        if "- rms error" in line:
+                            l0 = line.split('=')[1]
+                            values = convert1DArrayAsStringToNumpy(l0)
+                            error0 = float(l0)
+                    
+                    #Recreate transform
+
+                    """ From rigid_3d.py , find_32_constr_ck()
+                        inst = cls()
+                        inst.gl = s * r_33
+                        inst.q = r_33
+                        inst.y = y_33
+                        inst.s_scalar = s
+                        inst.s = s * np.identity(3)
+                        inst.ck = e_params
+                        inst.optimizeResult = res
+                        inst.initial_params = init
+                        inst.error = y_prime - np.dot(inst.gl[:2,:], x_prime)
+                        return inst
+                    """
+                    try:
+                        from .pyto import rigid_3d
+                    except:
+                        from pyto import rigid_3d
+
+                    inst= rigid_3d.Rigid3D()
+                    s= scale0
+                    angles_np_rad = np.array([phi0, theta0, psi0])*np.pi/180
+                    ck0 = rigid_3d.Rigid3D.euler_to_ck(angles_np_rad) # phi, theta, psi = angles order
+                    r_33 = rigid_3d.Rigid3D.make_r_euler(angles_np_rad)
+
+                    inst.gl = s * r_33
+                    inst.q = r_33 #rotation matrix
+                    inst.y = None
+                    inst.s_scalar = s
+                    inst.s = s * np.identity(3)
+                    inst.ck = ck0
+                    inst.optimizeResult = True
+                    inst.initial_params = None
+                    inst.error = error0
+                    inst.d=transl0
+
+                    self.correlation_results=[
+                        inst, #transf
+                         None, #transf_3d
+                         None, #spots_2d
+                         None, #delta2D
+                         None,#cm_3D_markers
+                         None #modified_translation
+                         ]
+
+                    self.populateTransformInfo(inst)
+
             except:
                 print("Error when importing file.")
         
@@ -2387,7 +2280,6 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 print("Not valid 2D and 3D combination")
                 return
             
-
             transf_3d = self.correlation_results[0]
 
             # extract eulers in degrees
@@ -2419,6 +2311,257 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             self.lockUnlockParamtersChkbx.setText("🔓 parameters")
 
     
+    def runLeaveOneOut(self):
+        #Runs leave one out algorithm using parameters in correlation tab
+
+        #Read parameters and points
+        #TODO 
+        model2D = None
+        model3D = None
+        if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
+            model2D = self.model_Left
+            model3D = self.model_Right
+        elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
+            model2D = self.model_Right
+            model3D = self.model_Left
+        else:
+            print("Not valid 2D and 3D combination")
+            return
+        pass
+        
+        #Code similar to correlate()
+        nrRowsModel2D = model2D.rowCount()
+        nrRowsModel3D = model3D.rowCount()
+        self.rotation_center = [
+            self.doubleSpinBox_custom_rot_center_x.value(),
+            self.doubleSpinBox_custom_rot_center_y.value(),
+            self.doubleSpinBox_custom_rot_center_z.value()]
+
+    def getPreCorrelationParameters(self):
+        if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
+            model2D = self.model_Left
+            model3D = self.model_Right
+            ## Temporary img to draw results and save it
+            img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
+            imgSide = 'left'
+
+            #TODO: This footer cropping should be optional
+            ## SEM/FIB imaging size is:	512x442, 1024x884, 2048x1768 or 4096x3536. Saved image file is
+            #  SEM/FIB image + footer:	512x470, 1024x941, 2048x1883 or 4096x3767
+            if img.shape[0] == 470:
+                imgShape = [442,img.shape[1]]
+            elif img.shape[0] == 941:
+                imgShape = [884,img.shape[1]]
+            elif img.shape[0] == 1883:
+                imgShape = [1768,img.shape[1]]
+            elif img.shape[0] == 3767:
+                imgShape = [3536,img.shape[1]]
+            else:
+                imgShape = img.shape
+            imageProps = [imgShape,self.sceneLeft.pixelSize,self.imgstack_right_layer1.shape]
+            if img.ndim == 2:
+                ## Need RGB for colored markers
+                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+        elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
+            model2D = self.model_Right
+            model3D = self.model_Left
+            ## Temporary img to draw results and save it
+            img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
+            imgSide = 'right'
+            ## SEM/FIB imaging size is:	512x442, 1024x884, 2048x1768 or 4096x3536. Saved image file is
+            #  SEM/FIB image + footer:	512x470, 1024x941, 2048x1883 or 4096x3767
+            if img.shape[0] == 470:
+                imgShape = [442,img.shape[1]]
+            elif img.shape[0] == 941:
+                imgShape = [884,img.shape[1]]
+            elif img.shape[0] == 1883:
+                imgShape = [1768,img.shape[1]]
+            elif img.shape[0] == 3767:
+                imgShape = [3536,img.shape[1]]
+            else:
+                imgShape = img.shape
+            imageProps = [imgShape,self.sceneRight.pixelSize,self.imgstack_left_layer1.shape]
+            if img.ndim == 2:
+                ## Need RGB for colored markers
+                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+        else:
+            #Neither left, right (2D,3D) or (3D,2D)
+            def corrMsgBox(self,msg):
+                #print('message box')
+                msgBox = QtWidgets.QMessageBox()
+                msgBox.setIcon(QtWidgets.QMessageBox.Question)
+                msgBox.setText(msg)
+                l2rButton = msgBox.addButton("Left to Right", QtWidgets.QMessageBox.ActionRole)
+                r2lButton = msgBox.addButton("Right to Left", QtWidgets.QMessageBox.ActionRole)
+                abortButton = msgBox.addButton(QtWidgets.QMessageBox.Cancel)
+                msgBox.exec_()
+                if msgBox.clickedButton() == l2rButton:
+                    return "l2r"
+                elif msgBox.clickedButton() == r2lButton:
+                    return "r2l"
+                elif msgBox.clickedButton() == abortButton:
+                    return None
+
+            if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
+                rowsLeft = self.model_Left.rowCount()
+                rowsRight = self.model_Right.rowCount()
+                if rowsLeft > rowsRight:
+                    corrMsgBoxRetVal = 'l2r'
+                elif rowsLeft < rowsRight:
+                    corrMsgBoxRetVal = 'r2l'
+                else:
+                    corrMsgBoxRetVal = corrMsgBox(
+                        self,"It seems you want to do a 3D to 3D correlation. " +
+                        "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
+                if corrMsgBoxRetVal == 'l2r':
+                    model2D = self.model_Right
+                    model3D = self.model_Left
+                    ## Temporary img to draw results and save it
+                    img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
+                    imgSide = 'right'
+                elif corrMsgBoxRetVal == 'r2l':
+                    model2D = self.model_Left
+                    model3D = self.model_Right
+                    ## Temporary img to draw results and save it
+                    img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
+                    imgSide = 'left'
+                else:
+                    return
+                if img.ndim == 2:
+                    ## Need RGB for colored markers
+                    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+                imageProps = None
+                # QtWidgets.QMessageBox.critical(self, "Data Structure",'Both datasets contain only 3D information. I need one 3D and one 2D dataset')
+                # raise ValueError('Both datasets contain only 3D information. I need one 3D and one 2D dataset')
+            elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
+                rowsLeft = self.model_Left.rowCount()
+                rowsRight = self.model_Right.rowCount()
+                if rowsLeft > rowsRight:
+                    corrMsgBoxRetVal = 'l2r'
+                elif rowsLeft < rowsRight:
+                    corrMsgBoxRetVal = 'r2l'
+                else:
+                    corrMsgBoxRetVal = corrMsgBox(
+                            self,"It seems you want to do a 2D to 2D correlation. " +
+                            "Since both data sets contain the same amount of markers, please specify which side you want to correlate to:")
+                if corrMsgBoxRetVal == 'l2r':
+                    model2D = self.model_Right
+                    model3D = self.model_Left
+                    ## Temporary img to draw results and save it
+                    img = np.copy(self.colorizeImage(self.img_adj_right_layer1,color=self.colorCoder(self.layer1Color_right,'right',1)))
+                    imgSide = 'right'
+                elif corrMsgBoxRetVal == 'r2l':
+                    model2D = self.model_Left
+                    model3D = self.model_Right
+                    ## Temporary img to draw results and save it
+                    img = np.copy(self.colorizeImage(self.img_adj_left_layer1,color=self.colorCoder(self.layer1Color_left,'left',1)))
+                    imgSide = 'left'
+                else:
+                    return
+                if img.ndim == 2:
+                    ## Need RGB for colored markers
+                    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+                imageProps = None
+                # QtWidgets.QMessageBox.critical(self, "Data Structure",'Both datasets contain only 2D information. I need one 3D and one 2D dataset')
+                # raise ValueError('Both datasets contain only 2D information. I need one 3D and one 2D dataset')
+            else:
+                QtWidgets.QMessageBox.critical(self, "Data Structure",'Cannot determine if datasets are 2D or 3D')
+                raise ValueError('Cannot determine if datasets are 2D or 3D')
+        ## variables for dataset validation. The amount of markers from the 2D and 3D model have to be in corresponding order.
+        ## All extra rows in the 3D model are used as POIs.
+        nrRowsModel2D = model2D.rowCount()
+        nrRowsModel3D = model3D.rowCount()
+        # self.rotation_center = [self.doubleSpinBox_psi.value(),self.doubleSpinBox_phi.value(),self.doubleSpinBox_theta.value()]
+        # self.rotation_center = [670, 670, 670]
+        self.rotation_center = [
+                                self.doubleSpinBox_custom_rot_center_x.value(),
+                                self.doubleSpinBox_custom_rot_center_y.value(),
+                                self.doubleSpinBox_custom_rot_center_z.value()]
+
+        if imageProps is not None and None in imageProps: imageProps = None
+
+        if nrRowsModel2D >= 2:
+            if nrRowsModel2D <= nrRowsModel3D:
+                timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+
+
+                # if self.correlInitialParamRandomChkBx.isChecked():
+                #     #Use random initial rotations and parameters to optimize correlation
+                #     self.correlation_results = correlation.main(
+                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
+                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
+                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                #                                             rotation_center=self.rotation_center,
+                #                                             results_file=''.join([
+                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
+                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
+                #                                             imageProps=imageProps
+                #                                             )
+                # else:
+                #     #Use specified initial parameters
+                #     self.correlation_results = correlation.main_withInitParams(
+                #                                             markers_3d=self.model2np(model3D,[0,nrRowsModel2D]),
+                #                                             markers_2d=self.model2np(model2D,[0,nrRowsModel2D]),
+                #                                             spots_3d=self.model2np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                #                                             rotation_center=self.rotation_center,
+                #                                             psi0= self.corrInitParamPsiDoubleSpinBox.value(),
+                #                                             phi0= self.corrInitParamPhiDoubleSpinBox.value(),
+                #                                             theta0= self.corrInitParamThetaDoubleSpinBox.value(),
+                #                                             scale0= self.corrInitParamScaleDoubleSpinBox.value(),
+                #                                             results_file=''.join([
+                #                                                 self.workingdir,'/',timestamp, '_correlation.txt'
+                #                                                 ] if self.checkBox_writeReport.isChecked() else ''),
+                #                                             imageProps=imageProps
+                #                                             )
+                
+                rotation_init_deg=None
+                scale_init=None
+
+                # Use initial (guess) parameters for the optimizer?
+                if self.correlGuessParametersChkBx.isChecked() or self.lockUnlockParamtersChkbx.isChecked():
+                    #extract guess parameters
+                    psi0= self.corrInitParamPsiDoubleSpinBox.value()
+                    phi0= self.corrInitParamPhiDoubleSpinBox.value()
+                    theta0= self.corrInitParamThetaDoubleSpinBox.value()
+                    scale0= self.corrInitParamScaleDoubleSpinBox.value()
+
+                    rotation_init_deg=np.array([phi0, theta0, psi0], dtype=np.float32)
+                    scale_init= scale0
+
+                ninit=1
+                # Random rotations?
+                random=False
+                if self.correlInitialParamRandomChkBx.isChecked():
+                    random=True
+                    ninit= self.corrInitParamNRandomsSpinBox.value()
+
+                #If all ok return all the parameters needed to do the correlation calculation
+                
+                return {
+                    'bCanCalculate':True,
+                    'markers_3d':self.model_to_np(model3D,[0,nrRowsModel2D]),
+                    'markers_2d':self.model_to_np(model2D,[0,nrRowsModel2D]),
+                    'spots_3d':self.model_to_np(model3D,[nrRowsModel2D,nrRowsModel3D]),
+                    'rotation_center':self.rotation_center,
+                    'results_file':''.join([
+                        self.workingdir,'/',timestamp, '_correlation.txt'
+                        ] if self.checkBox_writeReport.isChecked() else ''),
+                    'imageProps':imageProps,
+                    'rotation_init_deg':rotation_init_deg,
+                    'scale_init':scale_init,
+                    'ninit':ninit,
+                    'random':random,
+                    'transl_only':self.lockUnlockParamtersChkbx.isChecked()
+                }
+            else:
+                QtWidgets.QMessageBox.critical(self, "Data Structure", "The two datasets do not contain the same amount of markers!")
+                return {'bCanCalculate':False}
+        else:
+            QtWidgets.QMessageBox.critical(self, "Data Structure",'At least TWO markers are needed to do the correlation')
+            return {'bCanCalculate':False}
+        
+        return {'bCanCalculate':False} #Probably not needed
+
 
 class SplashScreen():
     def __init__(self):

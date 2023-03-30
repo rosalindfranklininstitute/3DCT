@@ -529,4 +529,7 @@ def main2(markers_3d,markers_2d,spots_3d,rotation_center, results_file,imageProp
 
     # delta calc,real
     delta2D = transf_3d[:2,:] - mark_2d
+    
     return [transf, transf_3d, spots_2d, delta2D, cm_3D_markers, modified_translation]
+    #It appears that cm_3D_markers are never used.
+

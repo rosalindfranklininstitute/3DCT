@@ -67,6 +67,7 @@ try:
     import TDCT_correlation
 except:
     from . import TDCT_correlation
+# import TDCT_correlation
 
 from tools3dct.project_fluo import fluo_project_GUI
 from tools3dct.create_mask import create_mask_GUI

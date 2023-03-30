@@ -219,7 +219,7 @@
              <enum>QTabWidget::Rounded</enum>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="ctrlTab">
              <property name="minimumSize">
@@ -1142,8 +1142,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>277</width>
-                   <height>647</height>
+                   <width>196</width>
+                   <height>661</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -1939,6 +1939,9 @@
                 </item>
                 <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
                  <widget class="QCheckBox" name="checkBox_writeReport">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -1953,7 +1956,7 @@
   to working dir</string>
                   </property>
                   <property name="checked">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>

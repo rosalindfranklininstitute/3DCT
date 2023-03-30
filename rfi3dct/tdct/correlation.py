@@ -142,7 +142,9 @@ def write_results(
         markers_3d, transformed_3d, markers_2d,rotation_center,modified_translation,imageProps=None):
     """
     """
-
+    if res_file_name is None or res_file_name=='':
+        return
+    
     # open results file
     res_file = open(res_file_name, 'w', newline='')
 

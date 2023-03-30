@@ -2276,7 +2276,7 @@
             </widget>
             <widget class="QWidget" name="tab">
              <attribute name="title">
-              <string>Page</string>
+              <string>L1Out</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
@@ -2303,7 +2303,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QWidget" name="wdgtPlotLEaveOneOut" native="true"/>
+               <widget class="MatplotlibWidgetCustom" name="wdgtPlotLEaveOneOut" native="true"/>
               </item>
              </layout>
             </widget>

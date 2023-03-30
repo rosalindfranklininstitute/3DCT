@@ -51,7 +51,10 @@ try:
 except:
     from .tools3dct.predict_FIB import predict_FIB_GUI
 
-__version__ = 'v3.0.0'
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+__version__ = '4.0.2'
 
 # add working directory temporarily to PYTHONPATH
 if getattr(sys, 'frozen', False):
@@ -1789,7 +1792,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         return np.array(listarray).astype(float)
 
     def correlate(self):
-
+        #print('correlate')
         preCorrelParams = self.getPreCorrelationParameters()
     
         if preCorrelParams['bCanCalculate']:
@@ -1812,7 +1815,13 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             #Cannot calculate
             return
 
-
+        #Retrieve othere paramters that will be used in code below
+        timestamp = preCorrelParams['timestamp']
+        img = preCorrelParams['img']
+        imgSide = preCorrelParams['imgSide']
+        model2D = preCorrelParams['model2D']
+        model3D = preCorrelParams['model3D']
+        nrRowsModel2D = preCorrelParams['nrRowsModel2D']
 
         transf_3d = self.correlation_results[1]
         alpha = self.doubleSpinBox_markerAlpha.value()
@@ -2315,27 +2324,139 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
         #Runs leave one out algorithm using parameters in correlation tab
 
         #Read parameters and points
-        #TODO 
-        model2D = None
-        model3D = None
-        if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
-            model2D = self.model_Left
-            model3D = self.model_Right
-        elif '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '0' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '1':
-            model2D = self.model_Right
-            model3D = self.model_Left
-        else:
-            print("Not valid 2D and 3D combination")
+
+        preCorrelParams = self.getPreCorrelationParameters()
+
+        if not preCorrelParams['bCanCalculate']:
+            #Cannot calculate
             return
-        pass
+
+        markers_3d=preCorrelParams['markers_3d']
+        markers_2d=preCorrelParams['markers_2d']
+
+        list_3d2d = list(zip(markers_3d, markers_2d ))
+
+        #print(list_3d2d) ok
+        from tools3dct.leave_one_out import cLeaveOneOut #TODO check it works
+        from pyto.rigid_3d import Rigid3D
+
+        #Create the iterator
+        iter_cleave_3d2d = iter(cLeaveOneOut(list_3d2d))
         
-        #Code similar to correlate()
-        nrRowsModel2D = model2D.rowCount()
-        nrRowsModel3D = model3D.rowCount()
-        self.rotation_center = [
-            self.doubleSpinBox_custom_rot_center_x.value(),
-            self.doubleSpinBox_custom_rot_center_y.value(),
-            self.doubleSpinBox_custom_rot_center_z.value()]
+        results_deltas=[]
+
+        # def get_corr_points_from_list( list_3d2d):
+        #     N=len(list_3d2d)
+        #     #print(N)
+        #     points_in_2d_0=np.zeros((2,N))
+        #     points_in_3d_0=np.zeros((3,N))
+
+        #     for i in range(N):
+        #         points_in_3d_0[0,i] = list_3d2d[i][0][0]
+        #         points_in_3d_0[1,i] = list_3d2d[i][0][1]
+        #         points_in_3d_0[2,i] = list_3d2d[i][0][2]
+
+        #         points_in_2d_0[0,i]= list_3d2d[i][1][0]
+        #         points_in_2d_0[1,i]= list_3d2d[i][1][1]
+            
+        #     return points_in_3d_0, points_in_2d_0
+        
+        def get_corr_points_from_list( list_3d2d):
+            N=len(list_3d2d)
+            #print(N)
+            points_in_2d_0=np.zeros((N,3))
+            points_in_3d_0=np.zeros((N,3))
+
+            for i in range(N):
+                points_in_3d_0[i,0] = list_3d2d[i][0][0]
+                points_in_3d_0[i,1] = list_3d2d[i][0][1]
+                points_in_3d_0[i,2] = list_3d2d[i][0][2]
+
+                points_in_2d_0[i,0]= list_3d2d[i][1][0]
+                points_in_2d_0[i,1]= list_3d2d[i][1][1]
+            
+            return points_in_3d_0, points_in_2d_0
+        
+        results_deltas=[]
+        for i,value in enumerate(iter_cleave_3d2d):
+            print("i:",i)
+
+            list_3d2d_0 , excl_elem0 = value
+            
+            points_in_3d, points_in_2d = get_corr_points_from_list(list_3d2d_0)
+
+            # transf = Rigid3D.find_32(
+            #     x=points_in_3d, y=points_in_2d,
+            #     scale=preCorrelParams['scale'],
+            #     randome=random_rotations,
+            #     einit=einit,
+            #     einit_dist=restrict_rotations,
+            #     randoms=random_scale,
+            #     sinit=scale_init,
+            #     ninit=ninit)
+            
+            corr_res0 = correlation.main2(
+                markers_3d=points_in_3d,
+                markers_2d=points_in_2d,
+                spots_3d=preCorrelParams['spots_3d'],
+                rotation_center=preCorrelParams['rotation_center'],
+                results_file=None,
+                imageProps=preCorrelParams['imageProps'],
+                rotation_init_deg=preCorrelParams['rotation_init_deg'],
+                scale_init=preCorrelParams['scale_init'],
+                ninit=preCorrelParams['ninit'],
+                random=preCorrelParams['random'],
+                transl_only=preCorrelParams['transl_only']
+                )
+            
+            transf0 = corr_res0[0]
+
+            #Calculates dy and dx for the point that was excluded
+            point_in_3d, point_in_2d = excl_elem0
+            #Converts to a format that can be used with the function transform() inside the Rigid3D class
+            point_in_3d=np.reshape(point_in_3d,(3,1))
+            point_in_2d=np.reshape(point_in_2d[0:2],(2,1))
+            #Get the 2D coordinates of the excluded 3D point
+            point_in_3d_transf = transf0.transform(x=point_in_3d)
+
+            #Calculates delta, being the difference between the transformed point and the given point location
+            delta = (point_in_2d - point_in_3d_transf[0:2]).transpose()[0]
+
+            print(f"i:{i}, optimized transform delta {delta}")
+
+            results_deltas.append( delta )
+        
+        print(f"results_deltas: {results_deltas}")
+        print(f"len(results_deltas):{len(results_deltas)}")
+
+        #plot results in a plot
+        results_deltas=np.array(results_deltas) #convert list to np array
+
+        #Setup canvas and figurel element
+        l0= self.wdgtPlotLeaveOneOut.layout()
+        if not self.wdgtPlotLeaveOneOut.layout() is None:
+            QtWidgets.QWidget().setLayout(self.wdgtPlotLeaveOneOut.layout())
+        #This is a way to clear the widget of all layouts
+        #self.wdgtPlotLEaveOneOut.clearAll()
+
+        self.L1O_figure = Figure(figsize=(5,5),dpi=72)
+        self.L1O_figure_canvas = FigureCanvas(self.L1O_figure)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.L1O_figure_canvas)
+        self.wdgtPlotLeaveOneOut.setLayout(layout)
+
+        self.L1O_scatter = self.L1O_figure.add_subplot(111)
+        self.L1O_scatter.scatter(results_deltas[:,1],results_deltas[:,0])
+        self.L1O_scatter.set_xlabel("dx / px")
+        self.L1O_scatter.set_ylabel("dy / px")
+
+        #Anottate each point
+        for i, xy0 in enumerate(results_deltas):
+            #print(xy0)
+            self.L1O_scatter.annotate(str(i+1), xy=[xy0[1]+0.2,xy0[0]])
+
+        self.L1O_figure_canvas.draw()
+
 
     def getPreCorrelationParameters(self):
         if '{0:b}'.format(self.sceneLeft.imagetype)[-1] == '1' and '{0:b}'.format(self.sceneRight.imagetype)[-1] == '0':
@@ -2536,7 +2657,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                     ninit= self.corrInitParamNRandomsSpinBox.value()
 
                 #If all ok return all the parameters needed to do the correlation calculation
-                
+
                 return {
                     'bCanCalculate':True,
                     'markers_3d':self.model_to_np(model3D,[0,nrRowsModel2D]),
@@ -2551,7 +2672,13 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                     'scale_init':scale_init,
                     'ninit':ninit,
                     'random':random,
-                    'transl_only':self.lockUnlockParamtersChkbx.isChecked()
+                    'timestamp':timestamp,
+                    'img':img,
+                    'imgSide':imgSide,
+                    'transl_only':self.lockUnlockParamtersChkbx.isChecked(),
+                    'model2D':model2D,
+                    'model3D':model3D,
+                    'nrRowsModel2D':nrRowsModel2D,
                 }
             else:
                 QtWidgets.QMessageBox.critical(self, "Data Structure", "The two datasets do not contain the same amount of markers!")

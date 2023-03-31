@@ -2306,7 +2306,7 @@
                </widget>
               </item>
               <item>
-               <widget class="MatplotlibWidgetCustom" name="wdgtPlotLEaveOneOut" native="true"/>
+               <widget class="MatplotlibWidgetCustom" name="wdgtPlotLeaveOneOut" native="true"/>
               </item>
              </layout>
             </widget>

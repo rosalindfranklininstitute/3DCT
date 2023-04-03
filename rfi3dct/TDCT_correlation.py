@@ -1815,7 +1815,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             #Cannot calculate
             return
 
-        #Retrieve othere paramters that will be used in code below
+        #Retrieve other paramters that will be used in code below
         timestamp = preCorrelParams['timestamp']
         img = preCorrelParams['img']
         imgSide = preCorrelParams['imgSide']
@@ -2378,6 +2378,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
             return points_in_3d_0, points_in_2d_0
         
         results_deltas=[]
+        results_rmserrors = []
         for i,value in enumerate(iter_cleave_3d2d):
             print("i:",i)
 
@@ -2410,7 +2411,7 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
                 )
             
             transf0 = corr_res0[0]
-
+            rms_error0 = transf0.rmsError
             #Calculates dy and dx for the point that was excluded
             point_in_3d, point_in_2d = excl_elem0
             #Converts to a format that can be used with the function transform() inside the Rigid3D class
@@ -2424,38 +2425,57 @@ class MainWidget(QtWidgets.QMainWindow, Ui_WidgetWindow):
 
             print(f"i:{i}, optimized transform delta {delta}")
 
-            results_deltas.append( delta )
+            results_deltas.append( delta )#
+            results_rmserrors.append(rms_error0)
         
-        print(f"results_deltas: {results_deltas}")
-        print(f"len(results_deltas):{len(results_deltas)}")
+        #print(f"results_deltas: {results_deltas}")
+        #print(f"len(results_deltas):{len(results_deltas)}")
+        
+        if len(results_deltas)>0 and len(results_rmserrors)>0:
+            #plot results in a plot
+            results_deltas=np.array(results_deltas) #convert list to np array
 
-        #plot results in a plot
-        results_deltas=np.array(results_deltas) #convert list to np array
+            #Setup canvas and figurel element
+            l0= self.wdgtPlotLeaveOneOut.layout()
+            if not self.wdgtPlotLeaveOneOut.layout() is None:
+                QtWidgets.QWidget().setLayout(self.wdgtPlotLeaveOneOut.layout())
+            #This is a way to clear the widget of all layouts
+            #self.wdgtPlotLEaveOneOut.clearAll()
 
-        #Setup canvas and figurel element
-        l0= self.wdgtPlotLeaveOneOut.layout()
-        if not self.wdgtPlotLeaveOneOut.layout() is None:
-            QtWidgets.QWidget().setLayout(self.wdgtPlotLeaveOneOut.layout())
-        #This is a way to clear the widget of all layouts
-        #self.wdgtPlotLEaveOneOut.clearAll()
+            #self.L1O_figure = Figure(figsize=(4,4),dpi=72)
+            self.L1O_figure = Figure(figsize=(4,4), dpi=72)
+            self.L1O_figure_canvas = FigureCanvas(self.L1O_figure)
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(self.L1O_figure_canvas)
+            self.wdgtPlotLeaveOneOut.setLayout(layout)
 
-        self.L1O_figure = Figure(figsize=(5,5),dpi=72)
-        self.L1O_figure_canvas = FigureCanvas(self.L1O_figure)
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.L1O_figure_canvas)
-        self.wdgtPlotLeaveOneOut.setLayout(layout)
+            self.L1O_scatter = self.L1O_figure.add_subplot(211)
+            self.L1O_scatter.scatter(results_deltas[:,1],results_deltas[:,0])
+            
+            self.L1O_scatter.set_xlabel("dx / px")
+            self.L1O_scatter.set_ylabel("dy / px")
+            # self.L1O_scatter.spines[['left', 'bottom']].set_position('zero')
+            # self.L1O_scatter.spines[['top', 'right']].set_visible(False)
+            #Center plot at zero
+            vmax = np.max(np.abs(results_deltas[:,1]))*1.1
+            self.L1O_scatter.set_xlim(-vmax,vmax)
+            self.L1O_scatter.set_ylim(-vmax,vmax)
 
-        self.L1O_scatter = self.L1O_figure.add_subplot(111)
-        self.L1O_scatter.scatter(results_deltas[:,1],results_deltas[:,0])
-        self.L1O_scatter.set_xlabel("dx / px")
-        self.L1O_scatter.set_ylabel("dy / px")
+            #Anottate each point
+            for i, xy0 in enumerate(results_deltas):
+                #print(xy0)
+                self.L1O_scatter.annotate(str(i+1), xy=[xy0[1]+0.2,xy0[0]])
 
-        #Anottate each point
-        for i, xy0 in enumerate(results_deltas):
-            #print(xy0)
-            self.L1O_scatter.annotate(str(i+1), xy=[xy0[1]+0.2,xy0[0]])
+            #TODO: Add bar chart with rms
+            # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.barh.html#matplotlib.pyplot.barh
 
-        self.L1O_figure_canvas.draw()
+            self.L1O_barh= self.L1O_figure.add_subplot(212)
+            bar_labels = np.arange(1, len(results_rmserrors)+1) #labels for each bar
+            self.L1O_barh.barh(bar_labels, results_rmserrors)
+            self.L1O_barh.set_xlabel("RMS")
+            self.L1O_barh.set_ylabel("Excluded pair")
+
+            self.L1O_figure_canvas.draw()
 
 
     def getPreCorrelationParameters(self):
